@@ -114,7 +114,8 @@ UserRoleEnum : {
 	carPath : String , // U D L R
 	carAlgorithm : CarAlgorithmEnum ,
 	carWaitCnt : int , // 小车等待时间，仅在 carStatus 为 WAITNG 时起作用，减到 0 时表示等待结束，仅在 Controller 中被改变
-	carColor : String | Color
+	carColor : String | Color ,
+    carStatusTime : Long 
 }
 ```
 
