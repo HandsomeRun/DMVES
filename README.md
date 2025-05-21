@@ -125,7 +125,7 @@ UserRoleEnum : {
 CarStatusEnum : {
 	FREE ,       // 空闲
 	RUNNING ,    // 运行
-	REQUESTING , // 请求导航中
+	REQUESTING , // 请求导航中 = 导航中
 	AVOIDING   , // 避障中(需要重新请求导航)
 	WAITING    , // 遇到小车等待中
 }
@@ -156,7 +156,6 @@ CarStatusEnum : {
 	Controller : String ,
 }
 ```
-
 
 #### 实验始终
 
