@@ -2,11 +2,49 @@
 
 ## 构建
 
-1. 控制器
-2. 小车系统
-3. 导航器
-4. 回放器
-5. View / UI
+1. 探索子系统
+
+	- 控制器 
+	- 导航器
+	- 小车
+	- View （）
+	- 目标器
+
+2. 探索日志
+
+3. 回放子系统
+
+	- 回放器
+	- View（）
+
+4. 用户子系统
+
+	- 登陆
+	- 注册
+	- 重置密码
+	- 修改用户权限
+	- 写系统日志
+
+5. 配置子系统
+
+	- 地图大小
+	- 小车配置
+	- 障碍物配置
+	- 写系统日志
+
+### 任务分配
+
+农宇晨 ： UI + View + 前端业务逻辑（包含系统日志）
+
+钱卓敏 : Controller + 回放器 + 探索日志
+
+常润   : 目标器 + 导航器
+
+张城祥 : 小车 + 启动脚本
+
+### 避障
+
+运动后检测下一步
 
 ## 数据结构
 
@@ -19,22 +57,24 @@
 	mapWidth :  String ,
 	mapBarrier : String ,  // 障碍地图 0 可 1 障碍
 	mapExplore : String ,  // 探索地图 0 未 1 探索
+	// 读： 目标器、导航器、小车、前段
+	// 写： 小车
 	
-	// 小车集合 Json 序列化 存到
-	cars : {
-		car[Id] : {
-			carId : string ,
-			carState : CAR_STATE , 
-			carPosition : Point , 
-			carPath : String 
-		}
-	}
+	
+	carNum : String , // 小车数量，只增变量，小车由系统部署
+	// Json 序列化
+	car[Id] : {	}
+	// 读： 
+	
+	// 断连小车集合，当控制器检测到一小车的心跳不新之后，会将其状态改为断连中，并将其 id 放到 disConnectCars 集合当中。当新增小车时，前端在 Redis 中创建小车实例，同时修改 carNum ，并将其 id 放到 disConnectCars 当中。当有空闲小车进程时，该进程反复读取 disConnectCars 集合，当存在僵尸小车时，从 disConnectCars 中取出小车，修改小车状态为 FREE 。
+	disConnectCars : 集合
 	
 	// 心跳
 	CarSystem : String , // CarSystem : 123154565
 	Navigator : String ,
 	View : String , 
-	Controller : String 
+	Controller : String ,
+	Target : String 
 	
 }
 ```
@@ -98,9 +138,9 @@ User : {
 
 ```javascript
 UserRoleEnum : {
-	REGULAR_USER , 
-	CONFIGURATOR , 
-	ADMIN
+	REGULAR_USER ,  // 只能看到实验进行
+	CONFIGURATOR , 	// 能配置也能看到实验运行 
+	ADMIN		    // 只能修改用户的密码
 }
 ```
 
@@ -110,12 +150,13 @@ UserRoleEnum : {
 {
 	carId : string ,
 	carStatus : CarStatusEnum , 
-	carPosition : Point , 
+	carPosition : Point ,
+	carTarget : Point , // 小车目标 
 	carPath : String , // U D L R
 	carAlgorithm : CarAlgorithmEnum ,
-	carWaitCnt : int , // 小车等待时间，仅在 carStatus 为 WAITNG 时起作用，减到 0 时表示等待结束，仅在 Controller 中被改变
+	carWaitCnt : int , // 小车状态保持剩余周期数，减为 0 时，回退到上一状态，在小车进程中检测 
 	carColor : String | Color ,
-    carStatusTime : Long 
+    carStatusTime : Long  // 小车心跳,控制器需要每个周期都检测
 }
 ```
 
@@ -123,11 +164,13 @@ UserRoleEnum : {
 
 ```javascript
 CarStatusEnum : {
+	DISCONNECTING,//断开连接中
 	FREE ,       // 空闲
 	RUNNING ,    // 运行
-	REQUESTING , // 请求导航中 = 导航中
-	AVOIDING   , // 避障中(需要重新请求导航)
-	WAITING    , // 遇到小车等待中
+	SEARCHING ,	 // 寻找目标中
+	WAITFORNAV , // 待导航
+	NAVIGATING , // 导航中
+	WAITING     // 遇到小车等待中
 }
 ```
 
@@ -163,7 +206,7 @@ CarStatusEnum : {
 
 1. 实验开始 前台 向 Redis 发 `isWork = 运行中`
 
-2. 实验结束 导航器 向 Redis 发 `isWork = 已完成`
+2. 实验结束 目标起 向 Redis 发 `isWork = 已完成`
 
 3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `ErrorData` 读取故障原因。
 
@@ -174,6 +217,15 @@ isWork 的所有状态：
 - 运行中
 - 故障
 - 已完成
+
+#### Controller 发 请求终点消息
+
+```
+1_TargetQueue
+{
+	car[Id] : int
+}
+```
 
 #### Controller 发 请求导航消息
 
