@@ -52,6 +52,9 @@
 
 ```javascript
 {
+	//实验信息
+	isWork 详见“实验始终部分”	
+
 	// 地图
 	mapHeight : String ,
 	mapWidth :  String ,
@@ -59,7 +62,6 @@
 	mapExplore : String ,  // 探索地图 0 未 1 探索
 	// 读： 目标器、导航器、小车、前段
 	// 写： 小车
-	
 	
 	carNum : String , // 小车数量，只增变量，小车由系统部署
 	// Json 序列化
@@ -273,12 +275,16 @@ isWork 的所有状态：
 
 User
 
-|字段名|数据类型|说明|
-|:-:|:-:|:-:|
-|userId| int |自增变量（从 10001 开始）|
-|userName|varchar(50)|用户名|
-|userPassWord|varchar(50)|MD5加密|
-|userRole| 外键 |用户级别表|
+|      字段名      |    数据类型     |        说明        |
+|:-------------:|:-----------:|:----------------:|
+|    userId     |     int     | 自增变量（从 10001 开始） |
+|   userName    | varchar(50) |       用户名        |
+| userPassWord  | varchar(50) |      MD5加密       |
+|   userRole    |     外键      |      用户级别表       |
+|  userStatus   |   char(3)   |   待审核，已通过，未通过    |
+| registerTime  |  DateTime   |       注册时间       |
+|  examineTime  |  DateTime   |    审核时间，可null    |
+| examineUserId |     外键      |   审核人Id，可null    |
 
 UserRoleEnum 
 
