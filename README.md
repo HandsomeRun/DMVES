@@ -70,7 +70,6 @@
 	disConnectCars : 集合
 	
 	// 心跳
-	CarSystem : String , // CarSystem : 123154565
 	Navigator : String ,
 	View : String , 
 	Controller : String ,
