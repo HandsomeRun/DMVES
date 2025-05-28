@@ -169,7 +169,7 @@ CarStatusEnum : {
 	FREE ,       // 空闲
 	RUNNING ,    // 运行
 	SEARCHING ,	 // 寻找目标中
-	WAITFORNAV , // 待导航
+	WAIT_NAV , // 待导航
 	NAVIGATING , // 导航中
 	WAITING     // 遇到小车等待中
 }
