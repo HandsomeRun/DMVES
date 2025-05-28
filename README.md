@@ -13,7 +13,8 @@
 2. 探索日志
 
 3. 回放子系统
-
+	
+	流程:UI在Redis给playbackTime,回放器周期监听playbackTime,向Redis加载相应的帧信息,加载完成后给view发送update
 	- 回放器
 	- View（）
 
@@ -31,6 +32,12 @@
 	- 小车配置
 	- 障碍物配置
 	- 写系统日志
+
+6. 分析子系统
+	
+	- Car的路径生成时间(折线图  横坐标:导航次数  纵坐标:导航时间)
+    - 算法的比较(柱状图 横坐标:算法类型  纵坐标:算法平均时间)
+    - 不同实验的运行试验比较(配置信息+实验运行时间 只能选择两个实验之间的比较)
 
 ### 任务分配
 
@@ -77,6 +84,8 @@
 	Controller : String ,
 	Target : String 
 	
+	//回放时间
+	playbackTime : String
 }
 ```
 
@@ -101,11 +110,14 @@ SystemLogs : {
 // 多车探索日志 C2风格，使用 MQ 处理分布式问题，小车完成移动后记录日志
 carRunLog[yyyy-mm-dd-hh:mm:ss] : 
 {
-	config : {
-		// 地图
-		mapHeight : String ,
-		mapWidth :  String ,
-		mapBarrier : String ,  // 障碍地图 0 可 1 障碍
+	information : {
+		//实验时长
+		expDuration : long
+	
+		// 地图	
+		mapHeight : int ,
+		mapWidth :  int ,
+		mapBarrier : int[][] ,  // 障碍地图 0 可 1 障碍
 		
 		// 小车 
 		cars : {
@@ -115,10 +127,18 @@ carRunLog[yyyy-mm-dd-hh:mm:ss] :
 	
 	runLog : {
 		{
-			Type   		: Move | Navigate ,
-			carId  		: int ,
-			Data  		: String ,  // 路径或者移动方向
-			TimeStemp 	: Long
+			mapExplore : String
+			cars : {
+				car[id] : {} 
+			}
+		}
+	}
+	
+	analysisLog : {
+		{
+			carId : int
+			carAlgorithm : CarAlgorithmEnum
+			navTime : long
 		}
 	}
 }
@@ -155,9 +175,9 @@ UserRoleEnum : {
 	carTarget : Point , // 小车目标 
 	carPath : String , // U D L R
 	carAlgorithm : CarAlgorithmEnum ,
-	carWaitCnt : int , // 小车状态保持剩余周期数，减为 0 时，回退到上一状态，在小车进程中检测 
+	carStatusCnt : int , // 小车状态保持剩余周期数，减为 0 时，回退到上一状态，在小车进程中检测 
 	carColor : String | Color ,
-    carStatusTime : Long  // 小车心跳,控制器需要每个周期都检测
+	carLastRunTime : Long  // 小车心跳,控制器需要每个周期都检测
 }
 ```
 
