@@ -10,7 +10,7 @@ public class Car {
     private String carPath;  //目标路径
     private CarStatusEnum carAlgorithm;  //算法
     private int carStatusCnt;  //处于当前状态的时间
-    private String carColor;
+    private String carColor;  //用不到颜色，直接转为String即可
     private long carLastRunTime;  //小车心跳，小车进程每次运行时都更新
 
     public int getCarId() {
