@@ -10,6 +10,10 @@ public class RedisUtil {
     public static RedisUtil redisUtil = new RedisUtil();
     private static Jedis _jedis;
     private String groupId;
+    /*
+    构件id
+     */
+    private UUID uuid;
 
     public static RedisUtil getInstance() {
         return redisUtil;
@@ -69,7 +73,11 @@ public class RedisUtil {
      * @return Redis中isWork的值，未运行、运行中、故障、已完成
      */
     public String getIsWork() {
-        return _jedis.get(groupId + "_isWork");
+        String key = groupId + "_isWork";
+        waitWrite(key);
+        String res = _jedis.get(key);
+        signalWrite(key);
+        return res;
     }
 
     /**
@@ -80,6 +88,20 @@ public class RedisUtil {
      */
     public int getInt(String key) {
         return Integer.parseInt(_jedis.get(groupId + "_" + key));
+    }
+
+    /**
+     * 通过key读取在Redis中的对应值并将之转化为int类型，用于需要互斥的key
+     *
+     * @param key 键
+     * @return 一个int值
+     */
+    public int getIntByLock(String key) {
+        String redisKey = groupId + "_" + key;
+        waitWrite(redisKey);
+        String res = _jedis.get(redisKey);
+        signalWrite(redisKey);
+        return Integer.parseInt(res);
     }
 
     /**
@@ -113,8 +135,11 @@ public class RedisUtil {
      */
     public Car getCar(int carId) {
         String key = groupId + "_Car" + String.valueOf(carId);
+        waitRead(key);  //等待读锁
         Gson gson = new Gson();
-        return gson.fromJson(_jedis.get(key), Car.class);
+        String res = _jedis.get(key);
+        signalRead(key);  //释放读锁
+        return gson.fromJson(res, Car.class);
     }
 
     /**
@@ -124,7 +149,9 @@ public class RedisUtil {
      */
     public Set<Integer> getDisConnectCars() {
         String key = groupId + "_disConnectCars";
+        waitWrite(key);
         Set<String> stringSet = _jedis.smembers(key);
+        signalWrite(key);
         Set<Integer> disConnectCars = new HashSet<>();
         for (String s : stringSet) {
             try {
@@ -166,6 +193,19 @@ public class RedisUtil {
     }
 
     /**
+     * 将value转为String并写入key，用于需要互斥的key
+     *
+     * @param key   键
+     * @param value 需要写入的值
+     */
+    public void setIntByLock(String key, int value) {
+        String redisKey = groupId + "_" + key;
+        waitWrite(redisKey);
+        _jedis.set(redisKey, String.valueOf(value));
+        signalWrite(redisKey);
+    }
+
+    /**
      * 将二维int数组转成String并写入指定Redis键值对
      *
      * @param key 地图名称
@@ -197,8 +237,10 @@ public class RedisUtil {
     public void setCar(Car car) {
         int carId = car.getCarId();
         String key = groupId + "_Car" + String.valueOf(carId);
+        waitWrite(key);
         Gson gson = new Gson();
         _jedis.set(key, gson.toJson(car));
+        signalWrite(key);
     }
 
     /**
@@ -208,10 +250,13 @@ public class RedisUtil {
      */
     public void setDisConnectCars(Set<Integer> disConnectCars) {
         String key = groupId + "_disConnectCars";
+        waitWrite(key);
+        _jedis.del(key); //删除set中的已有内容
         // 将每个元素添加到Redis集合中
         for (Integer carId : disConnectCars) {
             _jedis.sadd(key, carId.toString());
         }
+        signalWrite(key);
     }
 
     /**
@@ -222,5 +267,52 @@ public class RedisUtil {
      */
     public void setTimeStamp(String key, long timeStamp) {
         _jedis.set(groupId + "_" + key, String.valueOf(timeStamp));
+    }
+
+    /**
+     * P操作，写锁  普通互斥锁用writeLock即可
+     *
+     * @param key 锁名称
+     */
+    private void waitWrite(String key) {
+        while (Objects.equals(_jedis.get(key + "_writeLock"), "0")) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        _jedis.set(key + "_writeLock", "0");
+    }
+
+    /**
+     * P操作，写锁
+     *
+     * @param key 锁名称
+     */
+    private void waitRead(String key) {
+        String readLockName = key + "_readLock";
+        if (_jedis.scard(readLockName) == 0) waitWrite(key);  //没有人在读，获取写锁
+        _jedis.sadd(readLockName, uuid.toString());
+    }
+
+    /**
+     * V操作，读锁
+     *
+     * @param key 锁名称
+     */
+    private void signalWrite(String key) {
+        _jedis.set(key + "_writeLock", "1");
+    }
+
+    /**
+     * V操作，读锁
+     *
+     * @param key 锁名称
+     */
+    private void signalRead(String key) {
+        String readLockName = key + "_readLock";
+        _jedis.srem(readLockName, uuid.toString());
+        if (_jedis.scard(readLockName) == 0) signalWrite(key);
     }
 }
