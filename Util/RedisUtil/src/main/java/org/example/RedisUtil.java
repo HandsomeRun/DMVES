@@ -174,6 +174,16 @@ public class RedisUtil {
     }
 
     /**
+     * 读取redis中的<key,value>
+     *
+     * @param key 键
+     * @return 值
+     */
+    public String getString(String key) {
+        return _jedis.get(groupId + "_" + key);
+    }
+
+    /**
      * 设置Redis中isWork的状态
      *
      * @param isWork 处于工作的某个状态
@@ -196,7 +206,7 @@ public class RedisUtil {
      * 将value转为String并写入key，用于需要互斥的key
      *
      * @param key   键
-     * @param value 需要写入的值
+     * @param value 需要写入的值，int
      */
     public void setIntByLock(String key, int value) {
         String redisKey = groupId + "_" + key;
@@ -259,6 +269,13 @@ public class RedisUtil {
         signalWrite(key);
     }
 
+    public void addDisConnectCar(int carId) {
+        String key = groupId + "_disConnectCars";
+        waitWrite(key);
+        _jedis.sadd(key, String.valueOf(carId));
+        signalWrite(key);
+    }
+
     /**
      * 更对应的时间戳
      *
@@ -267,6 +284,16 @@ public class RedisUtil {
      */
     public void setTimeStamp(String key, long timeStamp) {
         _jedis.set(groupId + "_" + key, String.valueOf(timeStamp));
+    }
+
+    /**
+     * 将<key,value>存到redis
+     *
+     * @param key   键
+     * @param value 至
+     */
+    public void setString(String key, String value) {
+        _jedis.set(key, value);
     }
 
     /**

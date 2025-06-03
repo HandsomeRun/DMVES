@@ -61,6 +61,7 @@
 {
 	//实验信息
 	isWork 详见“实验始终部分”	
+	errorData 故障详情
 
 	// 地图
 	mapHeight : String ,
@@ -127,6 +128,7 @@ carRunLog[yyyy-mm-dd-hh:mm:ss] :
 	
 	runLog : {
 		{
+			timeStamp : long
 			mapExplore : String
 			cars : {
 				car[id] : {} 
@@ -229,7 +231,7 @@ CarStatusEnum : {
 
 2. 实验结束 目标起 向 Redis 发 `isWork = 已完成`
 
-3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `ErrorData` 读取故障原因。
+3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `errorData` 读取故障原因。
 
 4. 实验暂停 前台 向 Redis 发 `isWork = 未运行`
 
