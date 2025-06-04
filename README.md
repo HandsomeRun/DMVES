@@ -13,7 +13,8 @@
 2. 探索日志
 
 3. 回放子系统
-
+	
+	流程:UI在Redis给playbackTime,回放器周期监听playbackTime,向Redis加载相应的帧信息,加载完成后给view发送update
 	- 回放器
 	- View（）
 
@@ -31,6 +32,12 @@
 	- 小车配置
 	- 障碍物配置
 	- 写系统日志
+
+6. 分析子系统
+	
+	- Car的路径生成时间(折线图  横坐标:导航次数  纵坐标:导航时间)
+    - 算法的比较(柱状图 横坐标:算法类型  纵坐标:算法平均时间)
+    - 不同实验的运行试验比较(配置信息+实验运行时间 只能选择两个实验之间的比较)
 
 ### 任务分配
 
@@ -52,6 +59,10 @@
 
 ```javascript
 {
+	//实验信息
+	isWork 详见“实验始终部分”	
+	errorData 故障详情
+
 	// 地图
 	mapHeight : String ,
 	mapWidth :  String ,
@@ -59,7 +70,6 @@
 	mapExplore : String ,  // 探索地图 0 未 1 探索
 	// 读： 目标器、导航器、小车、前段
 	// 写： 小车
-	
 	
 	carNum : String , // 小车数量，只增变量，小车由系统部署
 	// Json 序列化
@@ -70,12 +80,13 @@
 	disConnectCars : 集合
 	
 	// 心跳
-	CarSystem : String , // CarSystem : 123154565
 	Navigator : String ,
 	View : String , 
 	Controller : String ,
 	Target : String 
 	
+	//回放时间
+	playbackTime : String
 }
 ```
 
@@ -100,11 +111,14 @@ SystemLogs : {
 // 多车探索日志 C2风格，使用 MQ 处理分布式问题，小车完成移动后记录日志
 carRunLog[yyyy-mm-dd-hh:mm:ss] : 
 {
-	config : {
-		// 地图
-		mapHeight : String ,
-		mapWidth :  String ,
-		mapBarrier : String ,  // 障碍地图 0 可 1 障碍
+	information : {
+		//实验时长
+		expDuration : long
+	
+		// 地图	
+		mapHeight : int ,
+		mapWidth :  int ,
+		mapBarrier : int[][] ,  // 障碍地图 0 可 1 障碍
 		
 		// 小车 
 		cars : {
@@ -114,10 +128,19 @@ carRunLog[yyyy-mm-dd-hh:mm:ss] :
 	
 	runLog : {
 		{
-			Type   		: Move | Navigate ,
-			carId  		: int ,
-			Data  		: String ,  // 路径或者移动方向
-			TimeStemp 	: Long
+			timeStamp : long
+			mapExplore : String
+			cars : {
+				car[id] : {} 
+			}
+		}
+	}
+	
+	analysisLog : {
+		{
+			carId : int
+			carAlgorithm : CarAlgorithmEnum
+			navTime : long
 		}
 	}
 }
@@ -154,9 +177,9 @@ UserRoleEnum : {
 	carTarget : Point , // 小车目标 
 	carPath : String , // U D L R
 	carAlgorithm : CarAlgorithmEnum ,
-	carWaitCnt : int , // 小车状态保持剩余周期数，减为 0 时，回退到上一状态，在小车进程中检测 
+	carStatusCnt : int , // 小车状态保持剩余周期数，减为 0 时，回退到上一状态，在小车进程中检测 
 	carColor : String | Color ,
-    carStatusTime : Long  // 小车心跳,控制器需要每个周期都检测
+	carLastRunTime : Long  // 小车心跳,控制器需要每个周期都检测
 }
 ```
 
@@ -168,7 +191,7 @@ CarStatusEnum : {
 	FREE ,       // 空闲
 	RUNNING ,    // 运行
 	SEARCHING ,	 // 寻找目标中
-	WAITFORNAV , // 待导航
+	WAIT_NAV , // 待导航
 	NAVIGATING , // 导航中
 	WAITING     // 遇到小车等待中
 }
@@ -208,7 +231,7 @@ CarStatusEnum : {
 
 2. 实验结束 目标起 向 Redis 发 `isWork = 已完成`
 
-3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `ErrorData` 读取故障原因。
+3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `errorData` 读取故障原因。
 
 4. 实验暂停 前台 向 Redis 发 `isWork = 未运行`
 
@@ -274,12 +297,16 @@ isWork 的所有状态：
 
 User
 
-|字段名|数据类型|说明|
-|:-:|:-:|:-:|
-|userId| int |自增变量（从 10001 开始）|
-|userName|varchar(50)|用户名|
-|userPassWord|varchar(50)|MD5加密|
-|userRole| 外键 |用户级别表|
+|      字段名      |    数据类型     |        说明        |
+|:-------------:|:-----------:|:----------------:|
+|    userId     |     int     | 自增变量（从 10001 开始） |
+|   userName    | varchar(50) |       用户名        |
+| userPassWord  | varchar(50) |      MD5加密       |
+|   userRole    |     外键      |      用户级别表       |
+|  userStatus   |   char(3)   |   待审核，已通过，未通过    |
+| registerTime  |  DateTime   |       注册时间       |
+|  examineTime  |  DateTime   |    审核时间，可null    |
+| examineUserId |     外键      |   审核人Id，可null    |
 
 UserRoleEnum 
 
