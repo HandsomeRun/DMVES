@@ -8,42 +8,34 @@ import java.util.concurrent.TimeoutException;
 // 点击装订区域中的 <icon src="AllIcons.Actions.Execute"/> 图标。
 public class Main {
     public static void main(String[] args) {
-        //TIP 当文本光标位于高亮显示的文本处时按 <shortcut actionId="ShowIntentionActions"/>
-        // 查看 IntelliJ IDEA 建议如何修正。
-        System.out.printf("Hello and welcome!");
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP 按 <shortcut actionId="Debug"/> 开始调试代码。我们已经设置了一个 <icon src="AllIcons.Debugger.Db_set_breakpoint"/> 断点
-            // 但您始终可以通过按 <shortcut actionId="ToggleLineBreakpoint"/> 添加更多断点。
-            System.out.println("i = " + i);
-        }
-
-        try {
-            Receiver receiver1 = new Receiver() ;
-
-            receiver1.receiveBroadcast(new MessageHandler() {
-                @Override
-                public void handle(String message) {
-                    System.out.println("[2 fanout] : " + message);
-                }
-            });
-
-            Receiver receiver2 = new Receiver();
-
-            receiver2.receiveFairMessage(new MessageHandler() {
-                @Override
-                public void handle(String message) {
-                    System.out.println("[2 Fair] : " + message);
-                }
-            });
+        String broadcastExchange = "broadcast.exchange";
+        String faircastExchange = "fair.exchange" ;
+        String queueNameF = "fair.queue" ;
+        String fairRoutingKey = "fair.routing.key";
 
 
+        Receiver breceiver = new Receiver();
+        breceiver.initExchange("broadcast.exchange" , "fanout");
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-        }
+        breceiver.receiveBroadcastMessage(broadcastExchange, new MessageHandler() {
+            @Override
+            public void handleMessage(String message) {
+                System.out.println("[1 fanout] : " + message);
+            }
+        });
+
+        Receiver freceiver = new Receiver();
+        freceiver.initExchange(faircastExchange , "direct");
+        freceiver.initQueue(queueNameF);
+        freceiver.bindQueueToExchange(queueNameF,faircastExchange,"fair.routing.key");
+
+        freceiver.receiveFairMessage(faircastExchange, queueNameF, new MessageHandler() {
+            @Override
+            public void handleMessage(String message) {
+                System.out.println("[1 fair] : " + message);
+            }
+        });
 
 
     }

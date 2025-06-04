@@ -7,35 +7,5 @@
         "virtualHost": "/",
         "connectionTimeout": 30000,
         "requestedHeartbeat": 60
-    },
-    "exchanges": {
-        "broadcast": {
-            "name": "broadcast.exchange",
-            "type": "fanout",
-            "durable": true
-        },
-        "fair": {
-            "name": "fair.exchange",
-            "type": "direct",
-            "durable": true
-        }
-    },
-    "queues": {
-        "broadcast": {
-            "name": "broadcast.queue1",
-            "durable": true,
-            "exclusive": false,
-            "autoDelete": false
-        },
-        "fair": {
-            "name": "fair.queue",
-            "durable": true,
-            "exclusive": false,
-            "autoDelete": false,
-            "prefetchCount": 1
-        }
-    },
-    "routingKeys": {
-        "fair": "fair.routing.key"
     }
 } 

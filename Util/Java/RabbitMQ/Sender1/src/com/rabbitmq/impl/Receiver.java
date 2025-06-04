@@ -1,121 +1,124 @@
 package com.rabbitmq.impl;
 
-import com.google.gson.JsonObject;
 import com.rabbitmq.client.*;
 import com.rabbitmq.config.MQConfigHelper;
+import com.rabbitmq.config.RabbitMQConfig;
 import com.rabbitmq.interfaces.IReceiver;
 import com.rabbitmq.interfaces.MessageHandler;
+
 import java.io.IOException;
+import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
 public class Receiver implements IReceiver {
-    private final Connection connection;
-    private final Channel channel;
-    private final MQConfigHelper configHelper;
-    private String fanoutQueueName = "" ;
+    public final static String MQ_FANOUT = "fanout" ;
+    public final static String MQ_DIRECT = "direct" ;
 
-    public Receiver() throws IOException, TimeoutException {
-        this.configHelper = MQConfigHelper.getInstance();
-        this.connection = createConnection();
-        this.channel = connection.createChannel();
-        setupQueues();
+    private Connection connection;
+    private Channel channel;
+    private final RabbitMQConfig config;
+
+    public Receiver() {
+        this.config = MQConfigHelper.getInstance().getConfig();
+        initConnection();
     }
 
-    private Connection createConnection() throws IOException, TimeoutException {
-        JsonObject config = configHelper.getRabbitMQConfig();
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(config.get("host").getAsString());
-        factory.setPort(config.get("port").getAsInt());
-        factory.setUsername(config.get("username").getAsString());
-        factory.setPassword(config.get("password").getAsString());
-        factory.setVirtualHost(config.get("virtualHost").getAsString());
-        factory.setConnectionTimeout(config.get("connectionTimeout").getAsInt());
-        factory.setRequestedHeartbeat(config.get("requestedHeartbeat").getAsInt());
-        return factory.newConnection();
-    }
+    private void initConnection() {
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(config.getHost());
+            factory.setPort(config.getPort());
+            factory.setUsername(config.getUsername());
+            factory.setPassword(config.getPassword());
+            factory.setVirtualHost(config.getVirtualHost());
+            factory.setConnectionTimeout(config.getConnectionTimeout());
+            factory.setRequestedHeartbeat(config.getRequestedHeartbeat());
 
-    private void setupQueues() throws IOException {
-        // 设置广播队列
-        JsonObject broadcastQueue = configHelper.getQueueConfig("broadcast");
-        channel.queueDeclare(
-            broadcastQueue.get("name").getAsString(),
-            broadcastQueue.get("durable").getAsBoolean(),
-            broadcastQueue.get("exclusive").getAsBoolean(),
-            broadcastQueue.get("autoDelete").getAsBoolean(),
-            null
-        );
-
-        // 设置公平分发队列
-        JsonObject fairQueue = configHelper.getQueueConfig("fair");
-        channel.queueDeclare(
-            fairQueue.get("name").getAsString(),
-            fairQueue.get("durable").getAsBoolean(),
-            fairQueue.get("exclusive").getAsBoolean(),
-            fairQueue.get("autoDelete").getAsBoolean(),
-            null
-        );
-
-        // 设置预取数量
-        channel.basicQos(fairQueue.get("prefetchCount").getAsInt());
-
-        // 绑定队列到交换机
-        JsonObject broadcastExchange = configHelper.getExchangeConfig("broadcast");
-        channel.queueBind(
-            broadcastQueue.get("name").getAsString(),
-            broadcastExchange.get("name").getAsString(),
-            ""
-        );
-
-        JsonObject fairExchange = configHelper.getExchangeConfig("fair");
-        channel.queueBind(
-            fairQueue.get("name").getAsString(),
-            fairExchange.get("name").getAsString(),
-            configHelper.getRoutingKey("fair")
-        );
-    }
-
-    @Override
-    public void receiveBroadcast(MessageHandler handler) throws IOException {
-        JsonObject queue = configHelper.getQueueConfig("broadcast");
-        channel.basicConsume(
-            queue.get("name").getAsString(),
-            true,
-            new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope,
-                                         AMQP.BasicProperties properties, byte[] body) {
-                    String message = new String(body);
-                    handler.handle(message);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void receiveFairMessage(MessageHandler handler) throws IOException {
-        JsonObject queue = configHelper.getQueueConfig("fair");
-        channel.basicConsume(
-            queue.get("name").getAsString(),
-            false,
-            new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope,
-                                         AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    String message = new String(body);
-                    handler.handle(message);
-                    channel.basicAck(envelope.getDeliveryTag(), false);
-                }
-            }
-        );
-    }
-
-    @Override
-    public void close() throws TimeoutException, IOException {
-        if (channel != null && channel.isOpen()) {
-            channel.close();
+            connection = factory.newConnection();
+            channel = connection.createChannel();
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException("Failed to initialize RabbitMQ connection", e);
         }
-        if (connection != null && connection.isOpen()) {
-            connection.close();
+    }
+
+    @Override
+    public void initExchange(String exchangeName, String exchangeType) {
+        try {
+            channel.exchangeDeclare(exchangeName, exchangeType);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize exchange: " + exchangeName, e);
+        }
+    }
+
+    @Override
+    public void initQueue(String queueName) {
+        try {
+            channel.queueDeclare(queueName, false, false, false, null);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize queue: " + queueName, e);
+        }
+    }
+
+    @Override
+    public void bindQueueToExchange(String queueName, String exchangeName, String routingKey) {
+        try {
+            channel.queueBind(queueName, exchangeName, routingKey);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to bind queue to exchange", e);
+        }
+    }
+
+    @Override
+    public String getQueueNameFromExchange(String exchangeName) {
+        try {
+            return channel.queueDeclare().getQueue();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get queue name from exchange", e);
+        }
+    }
+
+    @Override
+    public void receiveBroadcastMessage(String exchangeName, MessageHandler handler) {
+        try {
+            String queueName = getQueueNameFromExchange(exchangeName);
+            bindQueueToExchange(queueName, exchangeName, "");
+            setupConsumer(queueName, handler);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to setup broadcast message receiver", e);
+        }
+    }
+
+    @Override
+    public void receiveFairMessage(String exchangeName, String queueName, MessageHandler handler) {
+        try {
+            setupConsumer(queueName, handler);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to setup fair message receiver", e);
+        }
+    }
+
+    private void setupConsumer(String queueName, MessageHandler handler) throws IOException {
+        Consumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope,
+                                       AMQP.BasicProperties properties, byte[] body) {
+                String message = new String(body);
+                handler.handleMessage(message);
+            }
+        };
+        channel.basicConsume(queueName, true, consumer);
+    }
+
+    public void close() {
+        try {
+            if (channel != null && channel.isOpen()) {
+                channel.close();
+            }
+            if (connection != null && connection.isOpen()) {
+                connection.close();
+            }
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException("Failed to close RabbitMQ connection", e);
         }
     }
 } 

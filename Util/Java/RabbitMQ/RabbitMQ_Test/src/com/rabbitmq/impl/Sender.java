@@ -1,87 +1,83 @@
 package com.rabbitmq.impl;
 
-import com.google.gson.JsonObject;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.config.MQConfigHelper;
+import com.rabbitmq.config.RabbitMQConfig;
 import com.rabbitmq.interfaces.ISender;
+
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public class Sender implements ISender {
-    private final Connection connection;
-    private final Channel channel;
-    private final MQConfigHelper configHelper;
+    public final static String MQ_FANOUT = "fanout" ;
+    public final static String MQ_DIRECT = "direct" ;
 
-    public Sender() throws IOException, TimeoutException {
-        this.configHelper = MQConfigHelper.getInstance();
-        this.connection = createConnection();
-        this.channel = connection.createChannel();
-        setupExchanges();
+    private Connection connection;
+    private Channel channel;
+    private final RabbitMQConfig config;
+
+    public Sender() {
+        this.config = MQConfigHelper.getInstance().getConfig();
+        initConnection();
     }
 
-    private Connection createConnection() throws IOException, TimeoutException {
-        JsonObject config = configHelper.getRabbitMQConfig();
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(config.get("host").getAsString());
-        factory.setPort(config.get("port").getAsInt());
-        factory.setUsername(config.get("username").getAsString());
-        factory.setPassword(config.get("password").getAsString());
-        factory.setVirtualHost(config.get("virtualHost").getAsString());
-        factory.setConnectionTimeout(config.get("connectionTimeout").getAsInt());
-        factory.setRequestedHeartbeat(config.get("requestedHeartbeat").getAsInt());
-        return factory.newConnection();
-    }
+    private void initConnection() {
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(config.getHost());
+            factory.setPort(config.getPort());
+            factory.setUsername(config.getUsername());
+            factory.setPassword(config.getPassword());
+            factory.setVirtualHost(config.getVirtualHost());
+            factory.setConnectionTimeout(config.getConnectionTimeout());
+            factory.setRequestedHeartbeat(config.getRequestedHeartbeat());
 
-    private void setupExchanges() throws IOException {
-        // 设置广播交换机
-        JsonObject broadcastExchange = configHelper.getExchangeConfig("broadcast");
-        channel.exchangeDeclare(
-            broadcastExchange.get("name").getAsString(),
-            broadcastExchange.get("type").getAsString(),
-            broadcastExchange.get("durable").getAsBoolean()
-        );
-
-        // 设置公平分发交换机
-        JsonObject fairExchange = configHelper.getExchangeConfig("fair");
-        channel.exchangeDeclare(
-            fairExchange.get("name").getAsString(),
-            fairExchange.get("type").getAsString(),
-            fairExchange.get("durable").getAsBoolean()
-        );
-    }
-
-    @Override
-    public void sendBroadcast(String message) throws IOException {
-        JsonObject exchange = configHelper.getExchangeConfig("broadcast");
-        channel.basicPublish(
-            exchange.get("name").getAsString(),
-            "", // 广播消息不需要路由键
-            null,
-            message.getBytes()
-        );
-    }
-
-    @Override
-    public void sendFairMessage(String message) throws IOException {
-        JsonObject exchange = configHelper.getExchangeConfig("fair");
-        String routingKey = configHelper.getRoutingKey("fair");
-        channel.basicPublish(
-            exchange.get("name").getAsString(),
-            routingKey,
-            null,
-            message.getBytes()
-        );
-    }
-
-    @Override
-    public void close() throws IOException, TimeoutException {
-        if (channel != null && channel.isOpen()) {
-            channel.close();
+            connection = factory.newConnection();
+            channel = connection.createChannel();
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException("Failed to initialize RabbitMQ connection", e);
         }
-        if (connection != null && connection.isOpen()) {
-            connection.close();
+    }
+
+    @Override
+    public void initExchange(String exchangeName, String exchangeType) {
+        try {
+            channel.exchangeDeclare(exchangeName, exchangeType);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize exchange: " + exchangeName, e);
+        }
+    }
+
+    @Override
+    public void sendBroadcastMessage(String exchangeName, String message) {
+        try {
+            channel.basicPublish(exchangeName, "", null, message.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to send broadcast message", e);
+        }
+    }
+
+    @Override
+    public void sendFairMessage(String exchangeName, String routingKey , String message) {
+        try {
+            channel.basicPublish(exchangeName, routingKey, null, message.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to send fair message", e);
+        }
+    }
+
+    public void close() {
+        try {
+            if (channel != null && channel.isOpen()) {
+                channel.close();
+            }
+            if (connection != null && connection.isOpen()) {
+                connection.close();
+            }
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException("Failed to close RabbitMQ connection", e);
         }
     }
 } 

@@ -39,3 +39,63 @@ try {
 ### CarStatusEnum
 
 枚举了小车状态,状态详见README.md
+
+
+## RabbitMQ_util 的用法
+
+具体见 `./Util/Java/RabbitMQ/RabbitMQ/README.md`。
+
+软件包路径 `./Util/Java/RabbitMQ/RabbitMQ/com/*` + `./Util/Java/RabbitMQ/RabbitMQ/config.json`。
+
+依赖路径 `./Util/Java/RabbitMQ/RabbitMQ/lib/*`
+
+### Sender使用
+
+```java
+String broadcastExchange = "broadcast.exchange";
+String faircastExchange = "fair.exchange" ;
+String fairRoutingKey = "fair.routing.key" ;
+
+Sender sender = new Sender();
+
+sender.initExchange(broadcastExchange ,Sender.MQ_FANOUT ) ;
+sender.initExchange(faircastExchange , Sender.MQ_DIRECT);
+
+sender.sendBroadcastMessage(broadcastExchange , "这是一条广播消息");
+sender.sendFairMessage(faircastExchange , fairRoutingKey ,"这是一条公平分发消息");
+
+sender.close() ; 
+```
+
+### Receiver使用
+
+```java
+String broadcastExchange = "broadcast.exchange";
+String faircastExchange = "fair.exchange" ;
+String queueNameF = "fair.queue" ;
+String fairRoutingKey = "fair.routing.key";
+
+
+Receiver breceiver = new Receiver();
+breceiver.initExchange(broadcastExchange , Receiver.MQ_FANOUT);
+
+breceiver.receiveBroadcastMessage(broadcastExchange, new MessageHandler() {
+    @Override
+    public void handleMessage(String message) {
+        System.out.println("[fanout] : " + message);
+    }
+});
+
+Receiver freceiver = new Receiver();
+freceiver.initExchange(faircastExchange , Receiver.MQ_DIRECT);
+freceiver.initQueue(queueNameF);
+freceiver.bindQueueToExchange(queueNameF,faircastExchange,fairRoutingKey);
+
+freceiver.receiveFairMessage(faircastExchange, queueNameF, new MessageHandler() {
+    @Override
+    public void handleMessage(String message) {
+        System.out.println("[fair] : " + message);
+    }
+});
+
+```

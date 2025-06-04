@@ -1,6 +1,9 @@
 package com.rabbitmq.interfaces;
 
-@FunctionalInterface
 public interface MessageHandler {
-    void handle(String message);
+    /**
+     * 处理接收到的消息
+     * @param message 消息内容
+     */
+    void handleMessage(String message);
 } 

@@ -2,41 +2,39 @@ package com.rabbitmq.config;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Map;
 
 public class MQConfigHelper {
-    private static final String CONFIG_FILE = "src/config.json";
     private static MQConfigHelper instance;
-    private final JsonObject config;
+    private RabbitMQConfig config;
 
-    private MQConfigHelper() throws IOException {
-        try (FileReader reader = new FileReader(CONFIG_FILE)) {
-            this.config = new Gson().fromJson(reader, JsonObject.class);
-        }
+    private MQConfigHelper() {
+        loadConfig();
     }
 
-    public static synchronized MQConfigHelper getInstance() throws IOException {
+    public static synchronized MQConfigHelper getInstance() {
         if (instance == null) {
             instance = new MQConfigHelper();
         }
         return instance;
     }
 
-    public JsonObject getRabbitMQConfig() {
-        return config.getAsJsonObject("rabbitmq");
+    private void loadConfig() {
+        try (FileReader reader = new FileReader("src/config.json")) {
+            JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonObject rabbitmqConfig = jsonObject.getAsJsonObject("rabbitmq");
+            
+            Gson gson = new Gson();
+            config = gson.fromJson(rabbitmqConfig, RabbitMQConfig.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load RabbitMQ configuration", e);
+        }
     }
 
-    public JsonObject getExchangeConfig(String type) {
-        return config.getAsJsonObject("exchanges").getAsJsonObject(type);
-    }
-
-    public JsonObject getQueueConfig(String type) {
-        return config.getAsJsonObject("queues").getAsJsonObject(type);
-    }
-
-    public String getRoutingKey(String type) {
-        return config.getAsJsonObject("routingKeys").get(type).getAsString();
+    public RabbitMQConfig getConfig() {
+        return config;
     }
 } 
