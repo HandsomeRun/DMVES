@@ -303,14 +303,17 @@ public class RedisUtil {
      * @param key 锁名称
      */
     private void waitWrite(String key) {
-        while (Objects.equals(_jedis.get(key + "_writeLock"), "0")) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+        String writeLockName = key + "_writeLock";
+        if (_jedis.exists(writeLockName)) {
+            while (Objects.equals(_jedis.get(writeLockName), "0")) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
-        _jedis.set(key + "_writeLock", "0");
+        _jedis.set(writeLockName, "0");
     }
 
     /**
@@ -320,7 +323,7 @@ public class RedisUtil {
      */
     private void waitRead(String key) {
         String readLockName = key + "_readLock";
-        if (_jedis.scard(readLockName) == 0) waitWrite(key);  //没有人在读，获取写锁
+        if (_jedis.scard(readLockName) == 0) waitWrite(key);  //没有人在读，就需要获取写锁
         _jedis.sadd(readLockName, uuid.toString());
     }
 

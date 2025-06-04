@@ -14,9 +14,9 @@
 
 包名是cn.edu.ncepu, 若包名相同直接使用即可. 若报名不同,import即可
 
-具体使用方法可见Main或者Controller
+在源码中有每个方法的使用说明, 具体使用方法可见Main或者Controller
 
-
+使用示例:
 ```java
 //建立Redis连接
 RedisUtil redisUtil = RedisUtil.getInstance();
