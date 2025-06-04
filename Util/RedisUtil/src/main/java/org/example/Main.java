@@ -1,18 +1,20 @@
 package org.example;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 //RedisUtil使用示例
 public class Main {
     public static void main(String[] args) {
-        //example();  //使用示例代码见下
-        testLock();
+        UUID uuid = UUID.randomUUID();
+        //example(uuid);  //使用示例代码见下
+        testLock(uuid);
     }
 
-    private static void testLock() {
+    private static void testLock(UUID uuid) {
         RedisUtil redisUtil = RedisUtil.getInstance();
         try {
-            redisUtil.getJedis();
+            redisUtil.getJedis(uuid);
             redisUtil.setInt("carNumber_writeLock", 1);  //Redis中需要存在锁才能开始P V操作！
             redisUtil.setIntByLock("carNumber", 20);
             System.out.println(redisUtil.getIntByLock("carNumber"));
@@ -21,13 +23,13 @@ public class Main {
         }
     }
 
-    private static void example() {
+    private static void example(UUID uuid) {
         //1.new对象（单例类）
         RedisUtil redisUtil = RedisUtil.getInstance();
 
         try {
             //2.连接Redis
-            redisUtil.getJedis();
+            redisUtil.getJedis(uuid);
 
             //3.写Redis
             redisUtil.setInt("mapHeight", 15);

@@ -24,7 +24,8 @@ public class RedisUtil {
      *
      * @throws Exception 抛出的异常
      */
-    public void getJedis() throws Exception {
+    public void getJedis(UUID uuid) throws Exception {
+        this.uuid = uuid;
         if (null != _jedis && _jedis.isConnected()) {
             return;
         } else {
