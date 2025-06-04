@@ -1,4 +1,4 @@
-package org.example;
+package cn.edu.necpu;
 
 public enum CarStatusEnum {
     DISCONNECTING,

@@ -1,4 +1,4 @@
-package org.example;
+package cn.edu.necpu;
 
 import com.rabbitmq.interfaces.ISender;
 import org.slf4j.Logger;
@@ -9,7 +9,7 @@ public class ExploreLog {
     private static final Logger commandBLogger = LoggerFactory.getLogger("command.b.logger");
 
     public static void main(String[] args) {
-        //ISender sender;
+        ISender sender;
         commandALogger.info("This is a log message for command A.");
         commandBLogger.warn("Warning from command B.");
     }

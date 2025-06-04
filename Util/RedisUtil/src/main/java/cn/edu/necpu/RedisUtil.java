@@ -1,4 +1,4 @@
-package org.example;
+package cn.edu.necpu;
 
 import com.google.gson.Gson;
 import redis.clients.jedis.Jedis;

@@ -1,4 +1,4 @@
-package org.example;
+package cn.edu.necpu;
 
 import java.awt.*;
 

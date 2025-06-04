@@ -1,6 +1,5 @@
-package org.example;
+package cn.edu.necpu;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 //RedisUtil使用示例
