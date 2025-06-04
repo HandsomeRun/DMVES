@@ -1,0 +1,147 @@
+package cn.edu.necpu;
+
+import java.util.List;
+import java.util.UUID;
+
+public class Controller {
+    /*
+    构件名称列表（只读）
+     */
+    private final static List<String> COMPONENT_NAME = List.of("Navigator", "View", "Controller", "Target");
+    /*
+    构件最长容忍时间
+     */
+    private final static long COMPONENT_TOLERANCE_TIME = 5000;
+    /*
+    小车进程最长容忍时间
+     */
+    private final static long CAR_TOLERANCE_TIME = 2000;
+
+    private final static UUID uuid = UUID.randomUUID();
+
+    public static void main(String[] args) {
+        //建立Redis连接
+        RedisUtil redisUtil = RedisUtil.getInstance();
+        try {
+            redisUtil.getJedis(uuid);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            //写日志
+        }
+
+        /*
+        用于记录开始时间
+         */
+        long startTime = -1;
+        long durationTime = 0;
+
+        mainWhile:
+        while (true) {
+            long sleepTime = 500;
+            long nowTime = System.currentTimeMillis();
+            redisUtil.setTimeStamp("Controller", nowTime);
+            switch (redisUtil.getIsWork()) {
+                case "运行中" -> {
+
+
+                    if (-1 == startTime) {
+                        startTime = System.currentTimeMillis();
+                        durationTime = 0;
+                        //发MQ给日志系统
+                    }
+
+                    //检查构件是否存活
+                    for (String component : COMPONENT_NAME) {
+                        long lastTime = redisUtil.getTimeStamp(component);
+                        if (nowTime - lastTime > COMPONENT_TOLERANCE_TIME) {//超出容忍时间
+                            redisUtil.setIsWork("故障");
+                            redisUtil.setString("errorData", String.format("构件%s 已不存在！", component));
+                            startTime = -1;
+                            //可选择发mq
+                            continue mainWhile; //跳到主循环
+                        }
+                    }
+
+                    //计算时间
+                    durationTime += nowTime - startTime;
+                    startTime = nowTime;
+
+                    //遍历小车
+                    int carNumber = redisUtil.getIntByLock("carNumber");
+                    for (int i = 0; i < carNumber; i++) {
+                        Car car = redisUtil.getCar(i + 1);
+                        CarStatusEnum carStatus = car.getCarStatus();
+                        int carStatusCnt = car.getCarStatusCnt();
+
+                        //断联状态
+                        if (CarStatusEnum.DISCONNECTING == carStatus) continue;
+
+                        //超出小车容忍时间，认为小车进程断联
+                        if (nowTime - car.getCarLastRunTime() > CAR_TOLERANCE_TIME) {
+                            //更改小车状态，并将小车放入僵尸队列
+                            car.setCarStatus(CarStatusEnum.DISCONNECTING);
+                            redisUtil.setCar(car);
+                            redisUtil.addDisConnectCar(car.getCarId());
+                            continue;
+                        }
+
+                        //检查自身周期，周期为零时，可能需要进行状态回退
+                        carStatusCnt--;
+                        if (carStatusCnt < 1) {
+                            switch (car.getCarStatus()) {
+                                case SEARCHING -> car.setCarStatus(CarStatusEnum.FREE);
+                                case NAVIGATING, WAITING -> car.setCarStatus(CarStatusEnum.WAIT_NAV);
+                            }
+                        }
+
+                        int mq;
+                        //分发任务，设置小车状态
+                        switch (car.getCarStatus()) {
+                            case FREE -> {
+                                car.setCarStatusCnt(3);
+                                car.setCarStatus(CarStatusEnum.SEARCHING);
+                                redisUtil.setCar(car);
+                                mq = 1;//给目标器MQ
+                            }
+                            case WAIT_NAV -> {
+                                car.setCarStatusCnt(3);
+                                car.setCarStatus(CarStatusEnum.NAVIGATING);
+                                redisUtil.setCar(car);
+                                mq = 2;//给导航器MQ
+                            }
+                            case SEARCHING, NAVIGATING, WAITING -> {
+                                car.setCarStatusCnt(carStatusCnt);
+                                redisUtil.setCar(car);
+                            }
+                        }
+                    }
+
+                    //给view发MQ，更新上一帧的画面
+
+                    //给探索日志子系统发MQ，记录一帧
+
+                    //给小车进程MQ，更新小车状态
+
+                    sleepTime = 200;
+                }
+                case "已完成" -> {
+                    durationTime += nowTime - startTime;
+                    startTime = -1;
+                    //给view发mq，更新最后一帧
+
+                    //将redis中的isWork置为“未运行”，防止重复发消息
+                    redisUtil.setIsWork("未运行");
+                }
+                case "未运行" -> {
+                    if (startTime != -1) startTime = nowTime;
+                }
+            }
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+    }
+}
