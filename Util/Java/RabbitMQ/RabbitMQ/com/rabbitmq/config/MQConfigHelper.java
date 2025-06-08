@@ -23,7 +23,7 @@ public class MQConfigHelper {
     }
 
     private void loadConfig() {
-        try (FileReader reader = new FileReader("Util/Java/RabbitMQ/RabbitMQ/config.json")) {
+        try (FileReader reader = new FileReader("./src/config.json")) {
             JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
             JsonObject rabbitmqConfig = jsonObject.getAsJsonObject("rabbitmq");
             

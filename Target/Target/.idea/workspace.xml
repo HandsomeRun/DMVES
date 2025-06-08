@@ -5,14 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8246b133-c7bc-4304-95d0-759c9aa0998f" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/../../.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../.idea/jarRepositories.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Target.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Target.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/基于A_算法的无人船完全遍历路径规划研究_时天龙.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/室内清扫机器人的路径规划研究_徐亮.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/（不太详细）基于标点定位的清扫机器人遍历算法研究_杨竹丰.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/（实际建模）未知环境下无人机自主探索与地图构建研究_孙宇.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/（实际建模）未知环境下无人车自主导航探索与地图构建_满恂钰.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/（栅格回溯，ok）基于回溯的室内机器人完全遍历路径规划_彭永昆.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/（矩阵+栅格）移动机器人完全遍历系统研究_刘奎.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Navigator/参考/（神经网络，看不懂）移动机器人完全遍历路径规划研究_朱博.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/Car.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/Car/Car.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/CarAlgorithmEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/Car/CarAlgorithmEnum.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/CarStatusEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/Car/CarStatusEnum.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/HandsomeRun/TargetMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/HandsomeRun/Target/TargetMain.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/RedisUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/Redis/RedisUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Util/Java/RabbitMQ/RabbitMQ/com/rabbitmq/config/MQConfigHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Util/Java/RabbitMQ/RabbitMQ/com/rabbitmq/config/MQConfigHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Util/RedisUtil/src/main/java/cn/edu/necpu/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Util/RedisUtil/src/main/java/cn/edu/necpu/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,22 +32,22 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "HandsomeRun"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;HandsomeRun&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/HandsomeRun/DMVES.git",
-    "accountId": "78c383bc-66c0-4322-bc61-7b77f2c04709"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/HandsomeRun/DMVES.git&quot;,
+    &quot;accountId&quot;: &quot;78c383bc-66c0-4322-bc61-7b77f2c04709&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 4
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="2yDTF1SzF3A6ccz7h6qtVHrTQt7" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -54,11 +64,12 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "onboarding.tips.debug.path": "D:/Code/DMVES/Target/Target/src/Main.java",
-    "project.structure.last.edited": "库",
+    "project.structure.last.edited": "模块",
     "project.structure.proportion": "0.20337301",
     "project.structure.side.proportion": "0.3091954",
     "settings.editor.selected.configurable": "vcs.Git",
-    "应用程序.Main.executor": "Run"
+    "应用程序.Main.executor": "Run",
+    "应用程序.TargetMain.executor": "Run"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -66,7 +77,7 @@
       <recent name="D:\Code\DMVES\Target\Target\src" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="应用程序.TargetMain">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="Main" />
       <module name="Target" />
@@ -74,8 +85,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TargetMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="cn.edu.necpu.HandsomeRun.Target.TargetMain" />
+      <module name="Target" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="cn.edu.necpu.HandsomeRun.Target.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="应用程序.TargetMain" />
         <item itemvalue="应用程序.Main" />
       </list>
     </recent_temporary>
