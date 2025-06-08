@@ -1,39 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
-    <Appenders>
-        <RollingFile name="CommandA" fileName="logs/command_a.log"
-                     filePattern="logs/command_a-%d{yyyy-MM-dd}.log">
-            <PatternLayout>
-                <pattern>%d %p %c{1.} [%t] %m%n</pattern>
-            </PatternLayout>
-            <Policies>
-                <TimeBasedTriggeringPolicy />
-            </Policies>
-        </RollingFile>
-
-        <RollingFile name="CommandB" fileName="logs/command_b.log"
-                     filePattern="logs/command_b-%d{yyyy-MM-dd}.log">
-            <PatternLayout>
-                <pattern>%d %p %c{1.} [%t] %m%n</pattern>
-            </PatternLayout>
-            <Policies>
-                <TimeBasedTriggeringPolicy />
-            </Policies>
-        </RollingFile>
-    </Appenders>
-
     <Loggers>
-        <Logger name="command.a.logger" level="info" additivity="false">
-            <AppenderRef ref="CommandA"/>
+        <Logger name="information.logger" level="info" additivity="false">
         </Logger>
 
-        <Logger name="command.b.logger" level="info" additivity="false">
-            <AppenderRef ref="CommandB"/>
+        <Logger name="runLog.logger" level="info" additivity="false">
+        </Logger>
+
+        <Logger name="analysisLog.logger" level="info" additivity="false">
         </Logger>
 
         <Root level="error">
-            <AppenderRef ref="CommandA"/>
-            <AppenderRef ref="CommandB"/>
         </Root>
     </Loggers>
 </Configuration>

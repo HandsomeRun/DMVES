@@ -8,10 +8,26 @@ public class Car {
     private Point carPosition;
     private Point carTarget;
     private String carPath;  //目标路径
-    private CarStatusEnum carAlgorithm;  //算法
+    private CarAlgorithmEnum carAlgorithm;  //算法
     private int carStatusCnt;  //处于当前状态的时间
     private String carColor;  //用不到颜色，直接转为String即可
     private long carLastRunTime;  //小车心跳，小车进程每次运行时都更新
+
+    /*
+     * 仅仅测试用
+     */
+
+    public Car(int carId, CarStatusEnum carStatus, Point carPosition, Point carTarget, String carPath, CarAlgorithmEnum carAlgorithm, int carStatusCnt, String carColor, long carLastRunTime) {
+        this.carId = carId;
+        this.carStatus = carStatus;
+        this.carPosition = carPosition;
+        this.carTarget = carTarget;
+        this.carPath = carPath;
+        this.carAlgorithm = carAlgorithm;
+        this.carStatusCnt = carStatusCnt;
+        this.carColor = carColor;
+        this.carLastRunTime = carLastRunTime;
+    }
 
     public int getCarId() {
         return carId;
@@ -25,11 +41,11 @@ public class Car {
         this.carLastRunTime = carLastRunTime;
     }
 
-    public CarStatusEnum getCarAlgorithm() {
+    public CarAlgorithmEnum getCarAlgorithm() {
         return carAlgorithm;
     }
 
-    public void setCarAlgorithm(CarStatusEnum carAlgorithm) {
+    public void setCarAlgorithm(CarAlgorithmEnum  carAlgorithm) {
         this.carAlgorithm = carAlgorithm;
     }
 

@@ -109,7 +109,7 @@ SystemLogs : {
 
 ```javascript
 // 多车探索日志 C2风格，使用 MQ 处理分布式问题，小车完成移动后记录日志
-carRunLog[yyyy-mm-dd-hh:mm:ss] : 
+carRunLog[yyyy-mm-dd-hh_mm_ss] : 
 {
 	information : {
 		//实验时长

@@ -9,10 +9,10 @@ import java.util.*;
 public class RedisUtil {
     public static RedisUtil redisUtil = new RedisUtil();
     private static Jedis _jedis;
-    private String groupId;
+    private static String groupId;
     /*
-    构件id
-     */
+        构件id
+         */
     private UUID uuid;
 
     public static RedisUtil getInstance() {
@@ -321,14 +321,14 @@ public class RedisUtil {
      *
      * @param key 锁名称
      */
-    private void waitRead(String key) {
+    public void waitRead(String key) {
         String readLockName = key + "_readLock";
         if (_jedis.scard(readLockName) == 0) waitWrite(key);  //没有人在读，就需要获取写锁
         _jedis.sadd(readLockName, uuid.toString());
     }
 
     /**
-     * V操作，读锁
+     * V操作，写锁
      *
      * @param key 锁名称
      */
@@ -341,9 +341,14 @@ public class RedisUtil {
      *
      * @param key 锁名称
      */
-    private void signalRead(String key) {
+    public void signalRead(String key) {
         String readLockName = key + "_readLock";
         _jedis.srem(readLockName, uuid.toString());
         if (_jedis.scard(readLockName) == 0) signalWrite(key);
+    }
+
+
+    public static String getGroupId() {
+        return groupId;
     }
 }

@@ -15,7 +15,6 @@
     </properties>
 
     <dependencies>
-        <!-- Jedis -->
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
@@ -36,11 +35,6 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.22</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-nop</artifactId>
-            <version>1.7.2</version>
         </dependency>
     </dependencies>
 
