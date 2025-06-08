@@ -109,7 +109,7 @@ SystemLogs : {
 
 ```javascript
 // 多车探索日志 C2风格，使用 MQ 处理分布式问题，小车完成移动后记录日志
-carRunLog[yyyy-mm-dd-hh_mm_ss] : 
+carRunLog[yyyy-mm-dd-hh:mm:ss] : 
 {
 	information : {
 		//实验时长
@@ -240,7 +240,6 @@ isWork 的所有状态：
 - 运行中
 - 故障
 - 已完成
-- 回放中
 
 #### Controller 发 请求终点消息
 
