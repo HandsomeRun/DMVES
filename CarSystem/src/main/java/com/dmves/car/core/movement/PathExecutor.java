@@ -2,6 +2,7 @@ package com.dmves.car.core.movement;
 
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.model.Point;
+import com.dmves.car.core.connector.RedisConnector;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +39,10 @@ public class PathExecutor {
         Point currentPosition = car.getCarPosition();
         Point newPosition = calculateNewPosition(currentPosition, direction);
         car.setCarPosition(newPosition);
+
+        // 更新Redis中的位置信息
+        RedisConnector.updateCarPosition(car.getCarId(), newPosition);
+
         return true;
     }
 

@@ -8,6 +8,7 @@ import com.dmves.car.core.movement.MovementController;
 import com.dmves.car.core.state.CarStateManager;
 import com.dmves.car.core.message.CarMessageHandler;
 import com.dmves.car.core.message.CarMessageSender;
+import com.dmves.car.core.connector.RedisConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +23,6 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class CarComponent implements IComponent {
     private final String carId;
-    @SuppressWarnings("unused")
     private final IBlackboard blackboard;
     private final ObjectMapper objectMapper;
     private final Car car;
@@ -57,6 +57,9 @@ public class CarComponent implements IComponent {
         // 初始化消息处理器和发送器
         this.messageSender = new CarMessageSender(carId, blackboard);
         this.messageHandler = new CarMessageHandler(this, blackboard);
+
+        // 初始化时更新位置到Redis
+        RedisConnector.updateCarPosition(carId, new Point(0, 0));
     }
 
     @Override
@@ -105,6 +108,9 @@ public class CarComponent implements IComponent {
         // 停止消息处理器
         messageHandler.stop();
 
+        // 从Redis移除小车位置
+        RedisConnector.removeCarPosition(carId);
+
         log.info("小车组件 {} 已停止", carId);
     }
 
@@ -146,8 +152,12 @@ public class CarComponent implements IComponent {
      * 更新位置
      */
     public void updatePosition(int x, int y) {
-        car.setCarPosition(new Point(x, y));
+        Point newPosition = new Point(x, y);
+        car.setCarPosition(newPosition);
         stateManager.persistState();
+
+        // 更新位置到Redis
+        RedisConnector.updateCarPosition(carId, newPosition);
 
         // 记录移动日志
         messageSender.sendLogMessage("移动", String.format("位置已更新到 (%d,%d)", x, y));

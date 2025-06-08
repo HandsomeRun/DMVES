@@ -2,6 +2,7 @@ package com.dmves.car.core.movement;
 
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.blackboard.IBlackboard;
+import com.dmves.car.core.connector.RedisConnector;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -85,9 +86,14 @@ public class CollisionDetector {
 
     /**
      * 检查指定位置是否有其他小车
+     * 
+     * @param currentCarId 当前小车ID
+     * @param x            目标X坐标
+     * @param y            目标Y坐标
+     * @return 是否存在其他小车
      */
     private boolean hasOtherCar(String currentCarId, int x, int y) {
-        // TODO: 从Redis中获取其他小车位置信息并检查
-        return false;
+        // 使用RedisConnector检查位置
+        return RedisConnector.hasCarAtPosition(currentCarId, x, y);
     }
 }

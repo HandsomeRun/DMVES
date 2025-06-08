@@ -4,6 +4,7 @@ import com.dmves.car.core.message.*;
 import com.dmves.car.core.model.*;
 import com.dmves.car.core.component.CarComponent;
 import com.dmves.car.core.blackboard.IBlackboard;
+import com.dmves.car.core.connector.RedisConnector;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -43,8 +44,23 @@ public class CarSystemTest {
         }
     }
 
+    @BeforeClass
+    public static void setUpClass() {
+        // 启用Redis连接器的测试模式
+        RedisConnector.setTestMode(true);
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        // 禁用Redis连接器的测试模式
+        RedisConnector.setTestMode(false);
+    }
+
     @Before
     public void setUp() {
+        // 重置模拟的Redis数据
+        RedisConnector.MockRedisConnector.reset();
+
         mockBlackboard = new MockBlackboard();
 
         // 设置地图信息
