@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/DMVES.iml" filepath="$PROJECT_DIR$/.idea/DMVES.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Util/Java/RabbitMQ/RabbitMQ/RabbitMQ.iml" filepath="$PROJECT_DIR$/Util/Java/RabbitMQ/RabbitMQ/RabbitMQ.iml" />
     </modules>
   </component>
 </project>
