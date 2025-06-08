@@ -5,9 +5,6 @@ import com.dmves.car.core.model.Point;
 import com.dmves.car.core.connector.RedisConnector;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * 路径执行器
  * 负责执行小车的移动路径
@@ -16,13 +13,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PathExecutor {
     private final Car car;
     private final CollisionDetector collisionDetector;
-    private final AtomicBoolean isExecuting;
-    private CompletableFuture<Void> currentExecution;
+    private String currentPath;
 
     public PathExecutor(Car car, CollisionDetector collisionDetector) {
         this.car = car;
         this.collisionDetector = collisionDetector;
-        this.isExecuting = new AtomicBoolean(false);
+        this.currentPath = "";
     }
 
     /**
@@ -47,51 +43,54 @@ public class PathExecutor {
     }
 
     /**
-     * 执行路径
+     * 设置路径
      * 
      * @param path 路径字符串
-     * @return 是否开始执行
+     * @return 是否设置成功
      */
-    public boolean executePath(String path) {
+    public boolean setPath(String path) {
         if (path == null || path.isEmpty()) {
             log.warn("小车 {} 的路径为空", car.getCarId());
             return false;
         }
 
-        isExecuting.set(true);
-        currentExecution = CompletableFuture.runAsync(() -> {
-            try {
-                for (char direction : path.toCharArray()) {
-                    if (!isExecuting.get()) {
-                        log.info("小车 {} 的路径执行已停止", car.getCarId());
-                        break;
-                    }
-
-                    // 直接执行移动，不检查是否成功
-                    executeMove(String.valueOf(direction));
-
-                    // 每步移动后等待一段时间
-                    Thread.sleep(100);
-                }
-            } catch (InterruptedException e) {
-                log.error("小车 {} 的路径执行被中断", car.getCarId(), e);
-                Thread.currentThread().interrupt();
-            } finally {
-                isExecuting.set(false);
-            }
-        });
-
+        this.currentPath = path;
+        log.info("小车 {} 设置路径: {}", car.getCarId(), path);
         return true;
     }
 
     /**
-     * 停止路径执行
+     * 接收MQ执行命令，执行下一步移动
+     * 
+     * @return 是否成功执行
      */
-    public void stop() {
-        isExecuting.set(false);
-        if (currentExecution != null) {
-            currentExecution.cancel(true);
+    public boolean executeNextStep() {
+        if (currentPath.isEmpty()) {
+            log.warn("小车 {} 没有可执行的路径或已执行完毕", car.getCarId());
+            return false;
         }
+
+        // 获取最后一个字符作为移动方向
+        char direction = currentPath.charAt(currentPath.length() - 1);
+        boolean result = executeMove(String.valueOf(direction));
+
+        // 移除已执行的字符
+        currentPath = currentPath.substring(0, currentPath.length() - 1);
+
+        // 检查是否执行完毕
+        if (currentPath.isEmpty()) {
+            log.info("小车 {} 的路径执行完毕", car.getCarId());
+        }
+
+        return result;
+    }
+
+    /**
+     * 清除当前路径
+     */
+    public void clearPath() {
+        this.currentPath = "";
+        log.info("小车 {} 的路径已清除", car.getCarId());
     }
 
     /**
@@ -117,5 +116,26 @@ public class PathExecutor {
         }
 
         return new Point(x, y);
+    }
+
+    /**
+     * 检查是否还有路径需要执行
+     * 
+     * @return 是否有剩余路径
+     */
+    public boolean hasRemainingPath() {
+        return !currentPath.isEmpty();
+    }
+
+    /**
+     * 获取当前路径信息
+     * 
+     * @return 当前路径信息
+     */
+    public String getPathInfo() {
+        if (currentPath.isEmpty()) {
+            return "无路径";
+        }
+        return String.format("路径: %s, 剩余步数: %d", currentPath, currentPath.length());
     }
 }
