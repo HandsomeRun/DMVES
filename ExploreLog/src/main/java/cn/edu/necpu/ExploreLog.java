@@ -2,7 +2,7 @@ package cn.edu.necpu;
 
 import cn.edu.necpu.Model.ExploreMessage;
 import cn.edu.necpu.Model.InformationLog;
-import cn.edu.necpu.Model.LoggerNameEnum;
+import cn.edu.necpu.Model.LogNameEnum;
 import cn.edu.necpu.Model.RunLog;
 import com.google.gson.Gson;
 import com.rabbitmq.impl.Receiver;
@@ -63,11 +63,11 @@ public class ExploreLog {
 
                         // 初始化append和logger
                         loggerInformation[0] = addLogFileAndBindLogger(filePath[0] + "information.log"
-                                , LoggerNameEnum.INFORMATION);
+                                , LogNameEnum.INFORMATION);
                         loggerRunLog[0] = addLogFileAndBindLogger(filePath[0] + "runLog.log"
-                                , LoggerNameEnum.RUN_LOG);
+                                , LogNameEnum.RUN_LOG);
                         loggerAnalysisLog[0] = addLogFileAndBindLogger(filePath[0] + "analysisLog.log"
-                                , LoggerNameEnum.ANALYSIS_LOG);
+                                , LogNameEnum.ANALYSIS_LOG);
 
                         //记录配置信息
                         int carNum = redisUtil.getIntByLock("carNum");
@@ -129,7 +129,7 @@ public class ExploreLog {
      * @param loggerName logger名称
      * @return 绑定后的logger
      */
-    private static Logger addLogFileAndBindLogger(String filePath, LoggerNameEnum loggerName) {
+    private static Logger addLogFileAndBindLogger(String filePath, LogNameEnum loggerName) {
         // 获取当前上下文
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         Configuration config = ctx.getConfiguration();
@@ -156,10 +156,10 @@ public class ExploreLog {
         config.addAppender(appender);
 
         // 删去 Logger 中原有的 Appender
-        config.getLoggerConfig(loggerName.getDescription()).removeAppender("DynamicRollingFile");
+        config.getLoggerConfig(loggerName.getDescription() + ".logger").removeAppender("DynamicRollingFile");
 
         // 创建 Logger 配置并将 Appender 与其关联
-        config.getLoggerConfig(loggerName.getDescription()).addAppender(appender, null, null);
+        config.getLoggerConfig(loggerName.getDescription() + ".logger").addAppender(appender, null, null);
 
         // 更新 Loggers
         ctx.updateLoggers();

@@ -1,13 +1,13 @@
 package cn.edu.necpu.Model;
 
-public enum LoggerNameEnum {
-    INFORMATION("information.logger"),
-    RUN_LOG("runLog.logger"),
-    ANALYSIS_LOG("analysisLog.logger");
+public enum LogNameEnum {
+    INFORMATION("information"),
+    RUN_LOG("runLog."),
+    ANALYSIS_LOG("analysisLog");
 
     private final String description;
 
-    LoggerNameEnum(String description) {
+    LogNameEnum(String description) {
         this.description = description;
     }
 

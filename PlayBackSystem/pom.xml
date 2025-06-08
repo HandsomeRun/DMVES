@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>cn.deu.ncepu</groupId>
-    <artifactId>Controller</artifactId>
+    <groupId>org.example</groupId>
+    <artifactId>PlayBackSystem</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -19,11 +19,6 @@
             <artifactId>RedisUtil</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.rabbitmq</groupId>
-            <artifactId>amqp-client</artifactId>
-            <version>5.20.0</version>
         </dependency>
         <dependency>
             <groupId>cn.deu.ncepu</groupId>
