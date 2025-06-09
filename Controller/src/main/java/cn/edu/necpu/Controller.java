@@ -8,15 +8,15 @@ import java.util.List;
 import java.util.UUID;
 
 public class Controller {
-    /*
+    /**
     构件名称列表（只读）
      */
     private final static List<String> COMPONENT_NAME = List.of("Navigator", "View", "Controller", "Target");
-    /*
+    /**
     构件最长容忍时间
      */
     private final static long COMPONENT_TOLERANCE_TIME = 5000;
-    /*
+    /**
     小车进程最长容忍时间
      */
     private final static long CAR_TOLERANCE_TIME = 2000;
@@ -46,23 +46,6 @@ public class Controller {
         long startTime = -1;
         long durationTime = 0;
 
-//        if (-1 == startTime) {
-//            startTime = System.currentTimeMillis();
-//            durationTime = 0;
-//            // 发MQ给日志系统
-//            sender.sendFairMessage("exchange.ExploreLog"
-//                    , "exploreLog.start.fair.routing.key"
-//                    , String.valueOf(startTime));
-//
-//            sender.sendFairMessage("exchange.ExploreLog"
-//                    , "exploreLog.end.fair.routing.key"
-//                    , String.valueOf(durationTime));
-//
-//            sender.sendFairMessage("exchange.ExploreLog"
-//                    , "exploreLog.start.fair.routing.key"
-//                    , String.valueOf(startTime));
-//        }
-
         mainWhile:
         while (true) {
             long sleepTime = 500;
@@ -85,11 +68,17 @@ public class Controller {
                     // 检查构件是否存活
                     for (String component : COMPONENT_NAME) {
                         long lastTime = redisUtil.getTimeStamp(component);
-                        if (nowTime - lastTime > COMPONENT_TOLERANCE_TIME) {// 超出容忍时间
+                        // 超出容忍时间
+                        if (nowTime - lastTime > COMPONENT_TOLERANCE_TIME) {
                             redisUtil.setIsWork("故障");
                             redisUtil.setString("errorData", String.format("构件%s 已不存在！", component));
                             startTime = -1;
-                            // 可选择发mq
+
+                            // 给探索日志子系统发MQ，记录最后一帧，同时记录配置
+                            sender.sendFairMessage("exchange.ExploreLog"
+                                    , "exploreLog.fair.routing.key"
+                                    , new ExploreMessage("End", String.valueOf(durationTime)).toJson());
+
                             continue mainWhile; // 跳到主循环
                         }
                     }
@@ -186,6 +175,7 @@ public class Controller {
                     sleepTime = 200;
                 }
                 case "未运行" -> {
+                    //如果是暂停状态，需要更新时间戳
                     if (startTime != -1) startTime = nowTime;
                 }
             }

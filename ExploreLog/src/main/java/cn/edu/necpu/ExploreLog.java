@@ -4,7 +4,6 @@ import cn.edu.necpu.Model.ExploreMessage;
 import cn.edu.necpu.Model.InformationLog;
 import cn.edu.necpu.Model.LogNameEnum;
 import cn.edu.necpu.Model.RunLog;
-import com.google.gson.Gson;
 import com.rabbitmq.impl.Receiver;
 import com.rabbitmq.interfaces.MessageHandler;
 import org.apache.logging.log4j.LogManager;
@@ -69,7 +68,7 @@ public class ExploreLog {
                         loggerAnalysisLog[0] = addLogFileAndBindLogger(filePath[0] + "analysisLog.log"
                                 , LogNameEnum.ANALYSIS_LOG);
 
-                        //记录配置信息
+                        // 记录配置信息
                         int carNum = redisUtil.getIntByLock("carNum");
                         List<Car> cars = new ArrayList<>();
                         for (int i = 0; i < carNum; i++) {
@@ -86,12 +85,14 @@ public class ExploreLog {
                     case "Run" -> {
                         long durationTime = Long.parseLong(exploreMessage.getMsgContent());
                         if (null != loggerRunLog[0]) {
+                            // 获取Redis中所有小车
                             int carNumber = redisUtil.getIntByLock("carNum");
                             List<Car> cars = new ArrayList<>();
                             for (int i = 0; i < carNumber; i++) {
                                 cars.add(redisUtil.getCar(i + 1));
                             }
 
+                            // 加读锁访问探索地图
                             redisUtil.waitRead(RedisUtil.getGroupId() + "_mapExplore_readLock");
                             String mapExplore = redisUtil.getString("mapExplore");
                             redisUtil.signalRead(RedisUtil.getGroupId() + "_mapExplore_readLock");
@@ -100,26 +101,24 @@ public class ExploreLog {
                                     , mapExplore
                                     , cars);
 
-                            Gson gson = new Gson();
-                            loggerRunLog[0].info(gson.toJson(runLog));
+                            // 记录序列化后的帧信息
+                            loggerRunLog[0].info(runLog.toJson());
                         }
 
 
                     }
                     case "End" -> {
+                        // 完善配置信息
                         long durationTime = Long.parseLong(exploreMessage.getMsgContent());
                         informationLog[0].setExpDuration(durationTime);
 
-                        Gson gson = new Gson();
-                        loggerInformation[0].info(gson.toJson(informationLog[0]));
+                        // 记录序列化后的配置信息
+                        loggerInformation[0].info(informationLog[0].toJson());
                     }
-                    case "Analysis" -> {
-                        //记录导航器给的MQ
-                    }
+                    case "Analysis" -> loggerAnalysisLog[0].info(exploreMessage.getMsgContent());
                 }
             }
         });
-
     }
 
     /**

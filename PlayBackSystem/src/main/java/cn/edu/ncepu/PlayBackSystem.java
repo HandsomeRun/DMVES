@@ -3,7 +3,6 @@ package cn.edu.ncepu;
 import cn.edu.necpu.Car;
 import cn.edu.necpu.Model.RunLog;
 import cn.edu.necpu.RedisUtil;
-import com.google.gson.Gson;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;
 
@@ -28,22 +27,31 @@ public class PlayBackSystem {
         ISender sender = new Sender();
         sender.initExchange("exchange.View", Sender.MQ_FANOUT);
 
-        //得到文件路径
-        String filePath = "E:/大学/软件体系结构/第二次作业/DMVES/logs/2025-06-08-11_31_05" + "/runLog.log";
-
-        List<RunLog> logs = readRunLog(filePath);
+        String filePath = ""; /*= "E:/大学/软件体系结构/第二次作业/DMVES/logs/2025-06-08-11_31_05" + "/runLog.log";*/
+        long targetTime;
+        List<RunLog> runLogs = new ArrayList<>();
 
         while (true) {
-            long targetTime = redisUtil.getTimeStamp("playbackTime");
-            RunLog targetLog = findNearest(logs, targetTime);
+            long sleepTime = 500;
+            if ("回放中".equals(redisUtil.getIsWork())) {
+                String carRunLogName = redisUtil.getString("carRunLogName");
+                long playbackTime = redisUtil.getTimeStamp("playbackTime");
 
-            //如果不为空就写Redis，并且给View发消息
-            if (targetLog != null) {
-                updateRedis(redisUtil, targetLog);
-                sender.sendBroadcastMessage("exchange.View", "update");
+                // runLogs为空 或者 更换了路径
+                if (runLogs.isEmpty() || !filePath.equals(carRunLogName)) {
+                    runLogs = readRunLog(filePath + "/runLog.log");
+                }
+
+                //查询所需的log
+                RunLog targetLog = findNearest(runLogs, playbackTime);
+
+                // 如果不为空就写Redis，并且给View发消息
+                if (targetLog != null) {
+                    updateRedis(redisUtil, targetLog);
+                    sender.sendBroadcastMessage("exchange.View", "update");
+                }
             }
         }
-
     }
 
     /**
@@ -54,12 +62,11 @@ public class PlayBackSystem {
      */
     private static List<RunLog> readRunLog(String filePath) {
         List<RunLog> logs = new ArrayList<>();
-        Gson gson = new Gson();
 
         try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                logs.add(gson.fromJson(line, RunLog.class));
+                logs.add(RunLog.getRunLog(line));
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
