@@ -81,11 +81,12 @@ public class TargetMain {
             Car car = getCarFromRedis(carId);
             int[][] mapMerge = getMergedMap();
             int[] subMapInfo = locateCarSubMap(car, mapMerge);
-            if (isSubMapExplored(car, mapMerge, subMapInfo)) {
+            ExploreResult result = exploreSubMapAndCollectUnexplored(car, mapMerge, subMapInfo);
+            if (result.explored) {
                 int[] target = chooseNextSubMapTarget(car, mapMerge, subMapInfo);
                 updateCarTarget(car, target);
             } else {
-                int[] target = chooseSubMapTarget(car, mapMerge, subMapInfo);
+                int[] target = chooseSubMapTargetSmart(result.reachableUnexplored, mapMerge);
                 updateCarTarget(car, target);
             }
         } catch (Exception e) {
@@ -160,50 +161,62 @@ public class TargetMain {
 
         return new int[]{i, j, leftTopX, leftTopY, rightBottomX, rightBottomY};
     }
-    // 5. 判断子地图是否探索完
-    private static boolean isSubMapExplored(Car car, int[][] mapMerge, int[] subMapInfo) {
-        System.out.println("开始判断子地图是否探索结束");
-
-        int leftTopX = subMapInfo[2], leftTopY = subMapInfo[3];
-        int rightBottomX = subMapInfo[4], rightBottomY = subMapInfo[5];
-        // 检查边缘是否全为1或超界
-        // 上下边
-        for (int x = leftTopX; x <= rightBottomX; x++) {
-            if (mapMerge[x][leftTopY] != 1) return false;
-            if (mapMerge[x][rightBottomY] != 1) return false;
+    // 5. 判断子地图是否探索完 + 可达未探索点收集
+    private static class ExploreResult {
+        boolean explored;
+        java.util.List<Point> reachableUnexplored;
+        ExploreResult(boolean explored, java.util.List<Point> reachableUnexplored) {
+            this.explored = explored;
+            this.reachableUnexplored = reachableUnexplored;
         }
-        // 左右边
-        for (int y = leftTopY; y <= rightBottomY; y++) {
-            if (mapMerge[leftTopX][y] != 1) return false;
-            if (mapMerge[rightBottomX][y] != 1) return false;
-        }
-
-        System.out.println("子地图探索结束");
-        return true;
     }
-    // 6.1 未探索完，选择目标点
-    private static int[] chooseSubMapTarget(Car car, int[][] mapMerge, int[] subMapInfo) {
-        System.out.println("开始子地图下一个目标点");
-
+    private static ExploreResult exploreSubMapAndCollectUnexplored(Car car, int[][] mapMerge, int[] subMapInfo) {
         int leftTopX = subMapInfo[2], leftTopY = subMapInfo[3];
         int rightBottomX = subMapInfo[4], rightBottomY = subMapInfo[5];
-        int maxCount = -1;
-        int targetX = -1, targetY = -1;
-        for (int x = leftTopX; x <= rightBottomX; x++) {
-            for (int y = leftTopY; y <= rightBottomY; y++) {
-                if (mapMerge[x][y] == 2) {
-                    int count = countSurrounding2(mapMerge, x, y);
-                    if (count > maxCount) {
-                        maxCount = count;
-                        targetX = x;
-                        targetY = y;
-                    }
+        int w = mapMerge.length, h = mapMerge[0].length;
+        boolean[][] visited = new boolean[w][h];
+        java.util.List<Point> unexplored = new java.util.ArrayList<>();
+        java.util.Queue<Point> queue = new java.util.LinkedList<>();
+        int startX = car.getCarPosition().x, startY = car.getCarPosition().y;
+        if (startX < leftTopX || startX > rightBottomX || startY < leftTopY || startY > rightBottomY) {
+            // 小车不在当前子地图，直接判定已探索完毕
+            return new ExploreResult(true, unexplored);
+        }
+        queue.add(new Point(startX, startY));
+        visited[startX][startY] = true;
+        int[] dx = {0, 0, 1, -1};
+        int[] dy = {1, -1, 0, 0};
+        while (!queue.isEmpty()) {
+            Point p = queue.poll();
+            int x = p.x, y = p.y;
+            if (mapMerge[x][y] == 2) unexplored.add(new Point(x, y));
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d], ny = y + dy[d];
+                if (nx >= leftTopX && nx <= rightBottomX && ny >= leftTopY && ny <= rightBottomY
+                        && !visited[nx][ny] && (mapMerge[nx][ny] == 0 || mapMerge[nx][ny] == 2)) {
+                    visited[nx][ny] = true;
+                    queue.add(new Point(nx, ny));
                 }
             }
         }
+        boolean explored = unexplored.isEmpty();
+        return new ExploreResult(explored, unexplored);
+    }
 
-        System.out.printf("目标点为： %d %d \n" , targetX , targetY);
-        return new int[]{targetX, targetY};
+    // 6.1 未探索完，选择目标点（可达未探索点中周围2最多的）
+    private static int[] chooseSubMapTargetSmart(java.util.List<Point> candidates, int[][] mapMerge) {
+        int maxCount = -1;
+        Point target = null;
+        for (Point p : candidates) {
+            int count = countSurrounding2(mapMerge, p.x, p.y);
+            if (count > maxCount) {
+                maxCount = count;
+                target = p;
+            }
+        }
+        if (target == null) return new int[]{-1, -1};
+        System.out.printf("目标点为： %d %d \n", target.x, target.y);
+        return new int[]{target.x, target.y};
     }
     // 6.2 已探索完，蛇形遍历选择目标点
     private static int[] chooseNextSubMapTarget(Car car, int[][] mapMerge, int[] subMapInfo) {
