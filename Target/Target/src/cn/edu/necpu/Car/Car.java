@@ -1,4 +1,4 @@
-package cn.edu.necpu.Car;
+package cn.edu.ncepu.Car;
 
 import java.awt.*;
 

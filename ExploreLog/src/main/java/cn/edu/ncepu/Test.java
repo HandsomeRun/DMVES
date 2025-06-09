@@ -1,6 +1,6 @@
-package cn.edu.necpu;
+package cn.edu.ncepu;
 
-import cn.edu.necpu.Model.ExploreMessage;
+import cn.edu.ncepu.Model.ExploreMessage;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;
 

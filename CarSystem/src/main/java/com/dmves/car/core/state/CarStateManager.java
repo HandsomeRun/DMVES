@@ -3,7 +3,7 @@ package com.dmves.car.core.state;
 import com.dmves.car.core.blackboard.IBlackboard;
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.model.CarStatusEnum;
-import cn.edu.necpu.RedisUtil;
+import cn.edu.ncepu.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 

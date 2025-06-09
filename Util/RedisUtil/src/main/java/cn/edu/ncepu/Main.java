@@ -1,4 +1,4 @@
-package cn.edu.necpu;
+package cn.edu.ncepu;
 
 import java.util.UUID;
 
@@ -10,11 +10,23 @@ public class Main {
 //        testLock(uuid);
     }
 
+    private static void testReadLock(UUID uuid){
+        RedisUtil redisUtil = RedisUtil.getInstance();
+        try {
+            redisUtil.getJedis(uuid);
+
+
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     private static void testLock(UUID uuid) {
         RedisUtil redisUtil = RedisUtil.getInstance();
         try {
             redisUtil.getJedis(uuid);
-            redisUtil.setInt("carNumber_writeLock", 1);  //Redis中需要存在锁才能开始P V操作！
+            redisUtil.setInt("carNumber_writeLock", 1);
             redisUtil.setIntByLock("carNumber", 20);
             System.out.println(redisUtil.getIntByLock("carNumber"));
         } catch (Exception e) {

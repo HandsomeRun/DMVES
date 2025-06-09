@@ -54,11 +54,9 @@
         
         <!-- RedisUtil -->
         <dependency>
-            <groupId>cn.edu.necpu</groupId>
+            <groupId>cn.edu.ncepu</groupId>
             <artifactId>RedisUtil</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../Util/RedisUtil/target/RedisUtil-1.0-SNAPSHOT.jar</systemPath>
         </dependency>
         
         <!-- Gson for RedisUtil -->

@@ -2,8 +2,7 @@ package com.dmves.car.core.movement;
 
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.blackboard.IBlackboard;
-import com.dmves.car.core.model.Point;
-import cn.edu.necpu.RedisUtil;
+import cn.edu.ncepu.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -108,7 +107,7 @@ public class CollisionDetector {
                 }
 
                 // 首先尝试通过RedisUtil直接获取小车对象
-                cn.edu.necpu.Car redisCar = redisUtil.getCar(i);
+                cn.edu.ncepu.Car redisCar = redisUtil.getCar(i);
                 if (redisCar != null && redisCar.getCarPosition() != null) {
                     java.awt.Point position = redisCar.getCarPosition();
                     if (position.x == x && position.y == y) {

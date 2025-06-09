@@ -1,4 +1,4 @@
-package cn.edu.necpu.Model;
+package cn.edu.ncepu.Model;
 
 public enum LogNameEnum {
     INFORMATION("information"),
