@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8246b133-c7bc-4304-95d0-759c9aa0998f" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/HandsomeRun/Target/TargetMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/HandsomeRun/Target/TargetMain.java" afterDir="false" />
-    </list>
+    <list default="true" id="8246b133-c7bc-4304-95d0-759c9aa0998f" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
