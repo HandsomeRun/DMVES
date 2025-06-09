@@ -245,7 +245,7 @@ isWork 的所有状态：
 #### Controller 发 请求终点消息
 
 ```
-1_TargetQueue
+1.target.exchange / 1.target.queue / 1.target.routing.key
 {
 	car[Id] : int
 }
@@ -254,7 +254,7 @@ isWork 的所有状态：
 #### Controller 发 请求导航消息
 
 ```javascript
-1_NavigatorQueue
+1.navigator.exchange / 1.navigator.queue / 1.navigator.routing.key
 {
 	car[Id] : int
 }
@@ -282,13 +282,11 @@ isWork 的所有状态：
 
 **(100ms转存一次)**
 
+**导航器 发 探索日志**
 ```javascript
-1_RunLogQueue
+1.naviAnalysisLog.exchange / 广播模式
 {
-	Type   		: Move | Navigate ,
-	carId  		: int ,
-	Data  		: String ,  // 路径或者移动方向
-	TimeStemp 	: Long
+	AnalysisLog : {}
 }
 ```
 
