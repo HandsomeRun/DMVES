@@ -1,7 +1,7 @@
-package cn.edu.necpu.Redis;
+package cn.edu.ncepu.Redis;
 
-import cn.edu.necpu.Car.Car;
-import cn.edu.necpu.Main;
+import cn.edu.ncepu.Car.Car;
+import cn.edu.ncepu.Main;
 import com.google.gson.Gson;
 import redis.clients.jedis.Jedis;
 

@@ -6,6 +6,7 @@ import cn.edu.necpu.Car.Car;
 import com.google.gson.Gson;
 import com.rabbitmq.impl.Receiver;
 
+import java.awt.*;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 public class TargetMain {
     private static final String REDIS_TARGET_KEY = "Target";
-    private static final int INTERVAL_SECONDS = 60;
+    private static final int INTERVAL_SECONDS = 2;
     private static final int SUBMAP_SIZE = 20;
     private static final String EXCHANGE_NAME = "1.target.exchange";
     private static final String QUEUE_NAME = "1.target.queue";
@@ -56,7 +57,7 @@ public class TargetMain {
                 try {
                     long now = System.currentTimeMillis();
                     redisUtil.setString(REDIS_TARGET_KEY, String.valueOf(now));
-                    System.out.println("[Timer] 写入 Target 时间戳: " + now);
+                    System.out.println("[Target] 写入 Target 时间戳: " + now);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -116,25 +117,25 @@ public class TargetMain {
     private static int[][] getMergedMap() {
         System.out.println("开始获取并合并地图");
 
-        int mapHeight = redisUtil.getInt("mapHeight");
         int mapWidth = redisUtil.getInt("mapWidth");
+        int mapHeight = redisUtil.getInt("mapHeight");
         int[][] mapBarrier = redisUtil.getMap("mapBarrier", mapHeight, mapWidth);
         int[][] mapExplore = redisUtil.getMap("mapExplore", mapHeight, mapWidth);
-        int[][] mapMerge = new int[mapHeight][mapWidth];
-        for (int i = 0; i < mapHeight; i++) {
-            for (int j = 0; j < mapWidth; j++) {
-                if (mapExplore[i][j] == 1) {
-                    mapMerge[i][j] = (mapBarrier[i][j] == 0) ? 0 : 1;
+        int[][] mapMerge = new int[mapWidth][mapHeight];
+        for (int x = 0; x < mapWidth; x++) {
+            for (int y = 0; y < mapHeight; y++) {
+                if (mapExplore[x][y] == 1) {
+                    mapMerge[x][y] = (mapBarrier[x][y] == 0) ? 0 : 1;
                 } else {
-                    mapMerge[i][j] = 2;
+                    mapMerge[x][y] = 2;
                 }
             }
         }
 
         System.out.println("合并地图结束\n" + mapWidth + " " + mapHeight + " " + "\n");
-        for(int i = 0 ; i < mapHeight ; i ++ ) {
-            for(int j = 0 ; j < mapWidth ; j ++ ) {
-                System.out.print(mapMerge[i][j] + " ");
+        for(int y = 0 ; y < mapHeight ; y ++ ) {
+            for(int x = 0 ; x < mapWidth ; x ++ ) {
+                System.out.print(mapMerge[x][y] + " ");
             }
             System.out.println();
         }
@@ -144,16 +145,16 @@ public class TargetMain {
     private static int[] locateCarSubMap(Car car, int[][] mapMerge) {
         System.out.println("开始定位子地图");
 
-        int mapHeight = mapMerge.length;
-        int mapWidth = mapMerge[0].length;
+        int mapWidth = mapMerge.length;
+        int mapHeight = mapMerge[0].length;
         int x = car.getCarPosition().x;
         int y = car.getCarPosition().y;
         int i = x / SUBMAP_SIZE;
         int j = y / SUBMAP_SIZE;
         int leftTopX = i * SUBMAP_SIZE;
         int leftTopY = j * SUBMAP_SIZE;
-        int rightBottomX = Math.min((i + 1) * SUBMAP_SIZE - 1, mapHeight - 1);
-        int rightBottomY = Math.min((j + 1) * SUBMAP_SIZE - 1, mapWidth - 1);
+        int rightBottomX = Math.min((i + 1) * SUBMAP_SIZE - 1, mapWidth - 1);
+        int rightBottomY = Math.min((j + 1) * SUBMAP_SIZE - 1, mapHeight - 1);
 
         System.out.printf("定位子地图结束， %d %d %d %d %d %d\n" ,i , j , leftTopX,leftTopY ,rightBottomX , rightBottomY);
 
@@ -167,14 +168,14 @@ public class TargetMain {
         int rightBottomX = subMapInfo[4], rightBottomY = subMapInfo[5];
         // 检查边缘是否全为1或超界
         // 上下边
-        for (int y = leftTopY; y <= rightBottomY; y++) {
-            if (mapMerge[leftTopX][y] != 1) return false;
-            if (mapMerge[rightBottomX][y] != 1) return false;
-        }
-        // 左右边
         for (int x = leftTopX; x <= rightBottomX; x++) {
             if (mapMerge[x][leftTopY] != 1) return false;
             if (mapMerge[x][rightBottomY] != 1) return false;
+        }
+        // 左右边
+        for (int y = leftTopY; y <= rightBottomY; y++) {
+            if (mapMerge[leftTopX][y] != 1) return false;
+            if (mapMerge[rightBottomX][y] != 1) return false;
         }
 
         System.out.println("子地图探索结束");
@@ -190,7 +191,7 @@ public class TargetMain {
         int targetX = -1, targetY = -1;
         for (int x = leftTopX; x <= rightBottomX; x++) {
             for (int y = leftTopY; y <= rightBottomY; y++) {
-                if (mapMerge[x][y] == 0) {
+                if (mapMerge[x][y] == 2) {
                     int count = countSurrounding2(mapMerge, x, y);
                     if (count > maxCount) {
                         maxCount = count;
@@ -209,8 +210,8 @@ public class TargetMain {
         System.out.println("开始探索下一子地图");
 
         int i = subMapInfo[0], j = subMapInfo[1];
-        int mapHeight = mapMerge.length;
-        int mapWidth = mapMerge[0].length;
+        int mapWidth = mapMerge.length;
+        int mapHeight = mapMerge[0].length;
         int nextI = i, nextJ = j;
         // 蛇形遍历规则
         if (i % 2 == 1) {
@@ -222,7 +223,7 @@ public class TargetMain {
                 nextJ = j - 1;
             }
         } else {
-            if (j == (mapWidth - 1) / SUBMAP_SIZE) {
+            if (j == (mapHeight - 1) / SUBMAP_SIZE) {
                 nextI = i + 1;
                 nextJ = j;
             } else {
@@ -232,12 +233,12 @@ public class TargetMain {
         }
         int leftTopX = nextI * SUBMAP_SIZE;
         int leftTopY = nextJ * SUBMAP_SIZE;
-        int rightBottomX = Math.min((nextI + 1) * SUBMAP_SIZE - 1, mapHeight - 1);
-        int rightBottomY = Math.min((nextJ + 1) * SUBMAP_SIZE - 1, mapWidth - 1);
+        int rightBottomX = Math.min((nextI + 1) * SUBMAP_SIZE - 1, mapWidth - 1);
+        int rightBottomY = Math.min((nextJ + 1) * SUBMAP_SIZE - 1, mapHeight - 1);
         int maxCount = -1, targetX = -1, targetY = -1;
         for (int x = leftTopX; x <= rightBottomX; x++) {
             for (int y = leftTopY; y <= rightBottomY; y++) {
-                if (mapMerge[x][y] == 0) {
+                if (mapMerge[x][y] == 2) {
                     int count = countSurrounding2(mapMerge, x, y);
                     if (count > maxCount) {
                         maxCount = count;
@@ -256,20 +257,21 @@ public class TargetMain {
         int count = 0;
         int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
         int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
-        int h = map.length, w = map[0].length;
+        int w = map.length, h = map[0].length;
         for (int k = 0; k < 8; k++) {
             int nx = x + dx[k], ny = y + dy[k];
-            if (nx >= 0 && nx < h && ny >= 0 && ny < w && map[nx][ny] == 2) count++;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h && map[nx][ny] == 2) count++;
         }
         return count;
     }
     // 7. 更新 Car 状态与目标，写回 Redis
     private static void updateCarTarget(Car car, int[] target) {
         System.out.println("开始更新小车状态");
-
         if (target[0] == -1 || target[1] == -1) return;
         car.setCarStatus(CarStatusEnum.WAIT_NAV);
         car.setCarTarget(new java.awt.Point(target[0], target[1]));
+
+
 
         System.out.println("小车状态为 ： " + car.toString());
         redisUtil.setCar(car);
