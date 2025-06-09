@@ -2,7 +2,6 @@ package com.dmves.car.core.movement;
 
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.model.Point;
-import com.dmves.car.core.connector.RedisConnector;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -35,9 +34,6 @@ public class PathExecutor {
         Point currentPosition = car.getCarPosition();
         Point newPosition = calculateNewPosition(currentPosition, direction);
         car.setCarPosition(newPosition);
-
-        // 更新Redis中的位置信息
-        RedisConnector.updateCarPosition(car.getCarId(), newPosition);
 
         return true;
     }
@@ -116,6 +112,36 @@ public class PathExecutor {
         }
 
         return new Point(x, y);
+    }
+
+    /**
+     * 执行整个路径
+     * 
+     * @param path 路径字符串
+     * @return 是否成功开始执行
+     */
+    public boolean executePath(String path) {
+        if (path == null || path.isEmpty()) {
+            log.warn("小车 {} 的路径为空", car.getCarId());
+            return false;
+        }
+
+        // 设置路径
+        boolean result = setPath(path);
+        if (!result) {
+            return false;
+        }
+
+        log.info("小车 {} 开始执行路径: {}", car.getCarId(), path);
+        return true;
+    }
+
+    /**
+     * 停止执行路径
+     */
+    public void stop() {
+        clearPath();
+        log.info("小车 {} 停止执行路径", car.getCarId());
     }
 
     /**

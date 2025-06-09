@@ -7,7 +7,7 @@ public class Main {
     public static void main(String[] args) {
         UUID uuid = UUID.randomUUID();
         example(uuid);  //使用示例代码见下
-        //testLock(uuid);
+//        testLock(uuid);
     }
 
     private static void testLock(UUID uuid) {

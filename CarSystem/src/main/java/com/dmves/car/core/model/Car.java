@@ -19,7 +19,7 @@ public class Car {
     private Point carTarget; // 小车目标
     private String carPath; // U D L R
     private String carAlgorithm;
-    private int carStatusCnt;
+    private int carStatusCnt; //
     private String carColor;
     private Long carLastRunTime; // 小车心跳,控制器需要每个周期都检测
 }
