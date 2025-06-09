@@ -51,6 +51,14 @@ public class StateTransitionHandler {
                 // 转换到空闲状态前的准备
                 prepareForFree(car);
                 break;
+            case OBSTACLE_DETECTED:
+                // 转换到障碍检测状态前的准备
+                prepareForObstacleDetected(car);
+                break;
+            case RETURNING:
+                // 转换到回退状态前的准备
+                prepareForReturning(car);
+                break;
         }
     }
 
@@ -93,6 +101,14 @@ public class StateTransitionHandler {
             case FREE:
                 // 转换到空闲状态后的操作
                 handleFreeState(car);
+                break;
+            case OBSTACLE_DETECTED:
+                // 转换到障碍检测状态后的操作
+                handleObstacleDetectedState(car);
+                break;
+            case RETURNING:
+                // 转换到回退状态后的操作
+                handleReturningState(car);
                 break;
         }
     }
@@ -139,6 +155,17 @@ public class StateTransitionHandler {
         car.setCarStatusCnt(0);
     }
 
+    private void prepareForObstacleDetected(Car car) {
+        // 设置障碍检测状态计数器，短暂停留后决定下一步
+        car.setCarStatusCnt(10);
+    }
+
+    private void prepareForReturning(Car car) {
+        // 设置回退状态计数器
+        car.setCarStatusCnt(30);
+        // 这里可以添加生成回退路径的逻辑
+    }
+
     // 各状态转换后的处理方法
 
     private void handleRunningState(Car car) {
@@ -178,5 +205,17 @@ public class StateTransitionHandler {
     private void handleFreeState(Car car) {
         // 空闲状态的后续处理
         log.info("Car {} is now free", car.getCarId());
+    }
+
+    private void handleObstacleDetectedState(Car car) {
+        // 障碍检测状态的后续处理
+        log.info("Car {} detected obstacle, analyzing situation for {} cycles",
+                car.getCarId(), car.getCarStatusCnt());
+    }
+
+    private void handleReturningState(Car car) {
+        // 回退状态的后续处理
+        log.info("Car {} is now returning, will continue for {} cycles",
+                car.getCarId(), car.getCarStatusCnt());
     }
 }

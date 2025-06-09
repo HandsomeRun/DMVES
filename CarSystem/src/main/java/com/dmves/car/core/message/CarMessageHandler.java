@@ -19,7 +19,6 @@ public class CarMessageHandler {
     private final IBlackboard blackboard;
     private final MessageProcessor messageProcessor;
     private final ExecutorService executorService;
-    private final CarMessageSender messageSender;
     private boolean isRunning;
 
     public CarMessageHandler(CarComponent carComponent, IBlackboard blackboard) {
@@ -27,7 +26,6 @@ public class CarMessageHandler {
         this.blackboard = blackboard;
         this.messageProcessor = new MessageProcessor();
         this.executorService = Executors.newSingleThreadExecutor();
-        this.messageSender = new CarMessageSender(carComponent.getCarId(), blackboard);
         this.isRunning = false;
     }
 
@@ -95,9 +93,7 @@ public class CarMessageHandler {
                 // 短暂休眠，避免CPU占用过高
                 Thread.sleep(50);
             } catch (Exception e) {
-                log.error("Error in message loop for car {}", carComponent.getName(), e);
-                // 发送错误消息
-                messageSender.sendErrorMessage("SystemError", "Error in message loop: " + e.getMessage());
+                log.error("Error in message loop for car {}: {}", carComponent.getName(), e.getMessage());
             }
         }
     }
@@ -112,20 +108,10 @@ public class CarMessageHandler {
 
             if (msg.getType() == MessageType.MOVE_REQUEST) {
                 // 执行移动
-                boolean success = carComponent.move(msg.getContent());
-
-                // 发送移动结果
-                sendMoveResponse(success, msg.getContent());
-
-                // 发送视图更新消息
-                if (success) {
-                    sendViewUpdateMessage();
-                }
+                carComponent.move(msg.getContent());
             }
         } catch (JsonProcessingException e) {
-            log.error("Failed to parse move message for car {}", carComponent.getName(), e);
-            // 发送错误消息
-            messageSender.sendErrorMessage("MessageError", "Failed to parse move message: " + e.getMessage());
+            log.error("Failed to parse move message for car {}: {}", carComponent.getName(), e.getMessage());
         }
     }
 
@@ -140,27 +126,19 @@ public class CarMessageHandler {
             if (msg.getType() == MessageType.NAV_REQUEST) {
                 // 更新状态为导航中
                 carComponent.updateStatus(CarStatusEnum.NAVIGATING);
-
-                // 发送导航响应
-                sendNavResponse(true);
             } else if (msg.getType() == MessageType.NAV_RESPONSE) {
                 // 收到导航结果
                 String path = msg.getContent();
                 if (path != null && !path.isEmpty()) {
                     // 执行路径
                     carComponent.executePath(path);
-
-                    // 发送视图更新消息
-                    sendViewUpdateMessage();
                 } else {
                     // 导航失败
                     carComponent.updateStatus(CarStatusEnum.FREE);
                 }
             }
         } catch (JsonProcessingException e) {
-            log.error("Failed to parse nav message for car {}", carComponent.getName(), e);
-            // 发送错误消息
-            messageSender.sendErrorMessage("MessageError", "Failed to parse nav message: " + e.getMessage());
+            log.error("Failed to parse nav message for car {}: {}", carComponent.getName(), e.getMessage());
         }
     }
 
@@ -185,36 +163,21 @@ public class CarMessageHandler {
 
                         // 设置目标位置
                         carComponent.updateTarget(targetX, targetY);
-
-                        // 记录日志
                         log.info("Set target position for car {} to ({},{})",
                                 carComponent.getName(), targetX, targetY);
-
-                        // 向导航器发送导航请求
-                        sendNavigationRequest(targetX, targetY);
                     } catch (NumberFormatException e) {
                         log.error("Invalid target position format for car {}: {}",
-                                carComponent.getName(), msg.getContent(), e);
+                                carComponent.getName(), msg.getContent());
                         carComponent.updateStatus(CarStatusEnum.FREE);
-                        // 发送错误消息
-                        messageSender.sendErrorMessage("TargetError",
-                                "Invalid target position format: " + msg.getContent());
                     }
                 } else {
                     log.error("Invalid target message format for car {}: {}",
                             carComponent.getName(), msg.getContent());
                     carComponent.updateStatus(CarStatusEnum.FREE);
-                    // 发送错误消息
-                    messageSender.sendErrorMessage("TargetError", "Invalid target message format: " + msg.getContent());
                 }
-
-                // 发送状态更新消息
-                sendStatusUpdateMessage();
             }
         } catch (JsonProcessingException e) {
-            log.error("Failed to parse target message for car {}", carComponent.getName(), e);
-            // 发送错误消息
-            messageSender.sendErrorMessage("MessageError", "Failed to parse target message: " + e.getMessage());
+            log.error("Failed to parse target message for car {}: {}", carComponent.getName(), e.getMessage());
         }
     }
 
@@ -229,17 +192,15 @@ public class CarMessageHandler {
 
             switch (msg.getType()) {
                 case HEARTBEAT:
-                    // 处理心跳消息，回复心跳
-                    messageSender.sendHeartbeat();
+                    // 心跳消息由CarComponent自动处理
                     break;
 
                 case STATUS_QUERY:
-                    // 处理状态查询，回复当前状态
-                    sendStatusUpdateMessage();
+                    // 状态查询由CarComponent自动更新到Redis
                     break;
 
                 case ERROR:
-                    // 处理错误消息，记录错误
+                    // 记录错误消息
                     log.error("Received error message for car {}: {}", carComponent.getName(), msg.getContent());
                     break;
 
@@ -248,61 +209,7 @@ public class CarMessageHandler {
                     break;
             }
         } catch (JsonProcessingException e) {
-            log.error("Failed to parse general message for car {}", carComponent.getName(), e);
-            // 发送错误消息
-            messageSender.sendErrorMessage("MessageError", "Failed to parse general message: " + e.getMessage());
+            log.error("Failed to parse general message for car {}: {}", carComponent.getName(), e.getMessage());
         }
-    }
-
-    /**
-     * 发送移动响应消息
-     */
-    private void sendMoveResponse(boolean success, String direction) {
-        String content = success ? "SUCCESS:" + direction : "FAILED:" + direction;
-        messageSender.sendMessage(MessageType.MOVE_RESPONSE, content, "Controller");
-    }
-
-    /**
-     * 发送导航响应消息
-     */
-    private void sendNavResponse(boolean ready) {
-        String content = ready ? "READY" : "BUSY";
-        messageSender.sendMessage(MessageType.NAV_RESPONSE, content, "Navigator");
-    }
-
-    /**
-     * 发送状态更新消息
-     */
-    private void sendStatusUpdateMessage() {
-        String content = carComponent.getCurrentStatus().name();
-        messageSender.sendMessage(MessageType.STATUS_UPDATE, content, "Controller");
-    }
-
-    /**
-     * 发送视图更新消息
-     */
-    private void sendViewUpdateMessage() {
-        String updateViewQueueKey = "1_UpdateView";
-        try {
-            Message updateMsg = messageProcessor.createMessage(
-                    MessageType.STATUS_UPDATE,
-                    carComponent.getCarId(),
-                    carComponent.getName(),
-                    "View");
-
-            blackboard.write(updateViewQueueKey, messageProcessor.serializeMessage(updateMsg));
-        } catch (JsonProcessingException e) {
-            log.error("Failed to send view update message for car {}", carComponent.getName(), e);
-        }
-    }
-
-    /**
-     * 发送导航请求消息
-     */
-    private void sendNavigationRequest(int targetX, int targetY) {
-        String content = String.format("%s,%d,%d", carComponent.getCarId(), targetX, targetY);
-        messageSender.sendMessage(MessageType.NAV_REQUEST, content, "Navigator");
-        log.debug("Sent navigation request for car {} to target ({},{})",
-                carComponent.getName(), targetX, targetY);
     }
 }
