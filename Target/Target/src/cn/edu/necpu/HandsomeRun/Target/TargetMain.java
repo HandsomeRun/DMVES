@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class TargetMain {
     private static final String REDIS_TARGET_KEY = "Target";
-    private static final int INTERVAL_SECONDS = 2;
+    private static final int INTERVAL_SECONDS = 5;
     private static final int SUBMAP_SIZE = 20;
     private static final String EXCHANGE_NAME = "1.target.exchange";
     private static final String QUEUE_NAME = "1.target.queue";
