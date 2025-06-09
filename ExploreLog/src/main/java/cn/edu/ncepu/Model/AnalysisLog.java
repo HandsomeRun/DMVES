@@ -1,6 +1,6 @@
-package cn.edu.necpu.Model;
+package cn.edu.ncepu.Model;
 
-import cn.edu.necpu.CarAlgorithmEnum;
+import cn.edu.ncepu.CarAlgorithmEnum;
 import com.google.gson.Gson;
 
 public class AnalysisLog {

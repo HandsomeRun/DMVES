@@ -1,9 +1,9 @@
-package cn.edu.necpu;
+package cn.edu.ncepu;
 
-import cn.edu.necpu.Model.ExploreMessage;
-import cn.edu.necpu.Model.InformationLog;
-import cn.edu.necpu.Model.LogNameEnum;
-import cn.edu.necpu.Model.RunLog;
+import cn.edu.ncepu.Model.ExploreMessage;
+import cn.edu.ncepu.Model.InformationLog;
+import cn.edu.ncepu.Model.LogNameEnum;
+import cn.edu.ncepu.Model.RunLog;
 import com.rabbitmq.impl.Receiver;
 import com.rabbitmq.interfaces.MessageHandler;
 import org.apache.logging.log4j.LogManager;

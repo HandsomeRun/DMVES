@@ -15,10 +15,9 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>cn.deu.ncepu</groupId>
+            <groupId>cn.edu.ncepu</groupId>
             <artifactId>RedisUtil</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.rabbitmq</groupId>
@@ -26,8 +25,14 @@
             <version>5.20.0</version>
         </dependency>
         <dependency>
-            <groupId>cn.deu.ncepu</groupId>
+            <groupId>cn.edu.ncepu</groupId>
             <artifactId>ExploreLog</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>cn.edu.ncepu</groupId>
+            <artifactId>RedisUtil</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

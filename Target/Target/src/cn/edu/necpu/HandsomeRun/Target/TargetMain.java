@@ -1,8 +1,8 @@
-package cn.edu.necpu.HandsomeRun.Target;
+package cn.edu.ncepu.HandsomeRun.Target;
 
-import cn.edu.necpu.Car.CarStatusEnum;
-import cn.edu.necpu.Redis.RedisUtil;
-import cn.edu.necpu.Car.Car;
+import cn.edu.ncepu.Car.CarStatusEnum;
+import cn.edu.ncepu.Redis.RedisUtil;
+import cn.edu.ncepu.Car.Car;
 import com.google.gson.Gson;
 import com.rabbitmq.impl.Receiver;
 

@@ -10,6 +10,7 @@
         <module name="ExploreLog" />
         <module name="Controller" />
         <module name="RedisUtil" />
+        <module name="car-system" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

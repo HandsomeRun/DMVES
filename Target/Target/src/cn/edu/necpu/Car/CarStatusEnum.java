@@ -1,4 +1,4 @@
-package cn.edu.necpu.Car;
+package cn.edu.ncepu.Car;
 
 public enum CarStatusEnum {
     DISCONNECTING,

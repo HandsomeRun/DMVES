@@ -4,14 +4,15 @@ import com.dmves.car.core.blackboard.IBlackboard;
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.model.CarStatusEnum;
 import com.dmves.car.core.model.Point;
-import com.dmves.car.core.movement.MovementController;
+import com.dmves.car.core.movement.PathExecutor;
+import com.dmves.car.core.movement.CollisionDetector;
 import com.dmves.car.core.state.CarStateManager;
-import com.dmves.car.core.message.CarMessageHandler;
-import com.dmves.car.core.message.CarMessageSender;
-import com.dmves.car.core.connector.RedisConnector;
+import cn.edu.ncepu.RedisUtil;
+import cn.edu.ncepu.CarAlgorithmEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 
 /**
  * 小车组件
+ * 只负责更新心跳、执行导航器传来的路径和点亮地图
  */
 @Slf4j
 public class CarComponent implements IComponent {
@@ -26,40 +28,173 @@ public class CarComponent implements IComponent {
     private final IBlackboard blackboard;
     private final ObjectMapper objectMapper;
     private final Car car;
-    private final CarStateManager stateManager; // 小车状态管理器
-    private final MovementController movementController; // 移动控制器
-    private final CarMessageHandler messageHandler; // 消息处理器
-    private final CarMessageSender messageSender; // 消息发送器
+    private final CollisionDetector collisionDetector;
+    private final PathExecutor pathExecutor;
+    private final CarStateManager stateManager;
+    private final RedisUtil redisUtil;
+    private final UUID uuid;
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> heartbeatFuture;
-    private ScheduledFuture<?> statusCounterFuture;
+    private ScheduledFuture<?> statusCheckFuture;
+
+    // Redis键前缀
+    private static final String CAR_POSITION_KEY_PREFIX = "car:position:";
+    private static final String MAP_LIGHT_KEY_PREFIX = "map:light:";
 
     public CarComponent(String carId, IBlackboard blackboard) {
         this.carId = carId;
         this.blackboard = blackboard;
         this.objectMapper = new ObjectMapper();
+        this.uuid = UUID.randomUUID();
 
-        // 初始化小车对象
-        this.car = Car.builder()
-                .carId(carId)
-                .carStatus(CarStatusEnum.FREE)
-                .carPosition(new Point(0, 0)) // 默认位置
-                .carStatusCnt(0)
-                .carLastRunTime(System.currentTimeMillis())
-                .carPath("")
-                .carColor("blue") // 默认颜色
-                .build();
+        // 获取RedisUtil实例
+        this.redisUtil = RedisUtil.getInstance();
 
-        // 初始化状态管理器和移动控制器
+        try {
+            // 建立Redis连接
+            redisUtil.getJedis(uuid);
+            log.info("Redis连接成功建立");
+        } catch (Exception e) {
+            log.error("Redis连接失败: {}", e.getMessage());
+            throw new RuntimeException("Redis连接失败", e);
+        }
+
+        // 从Redis读取小车实例
+        Car loadedCar = loadCarFromRedis(carId);
+
+        if (loadedCar != null) {
+            // 如果Redis中存在小车信息，使用Redis中的数据
+            this.car = loadedCar;
+            log.info("从Redis成功加载小车 {}", carId);
+        } else {
+            // 如果Redis中不存在小车信息，创建新的小车对象
+            this.car = Car.builder()
+                    .carId(carId)
+                    .carStatus(CarStatusEnum.FREE)
+                    .carPosition(new Point(0, 0)) // 默认位置
+                    .carStatusCnt(0)
+                    .carLastRunTime(System.currentTimeMillis())
+                    .carPath("")
+                    .carColor("blue") // 默认颜色，因为RedisUtil的Car类可能没有getCarColor方法
+                    .build();
+            log.info("Redis中不存在小车 {}，创建新的小车实例", carId);
+        }
+
+        // 初始化碰撞检测器和路径执行器
+        this.collisionDetector = new CollisionDetector(blackboard);
+        this.pathExecutor = new PathExecutor(car, collisionDetector);
+
+        // 初始化状态管理器
         this.stateManager = new CarStateManager(car, blackboard);
-        this.movementController = new MovementController(car, blackboard);
 
-        // 初始化消息处理器和发送器
-        this.messageSender = new CarMessageSender(carId, blackboard);
-        this.messageHandler = new CarMessageHandler(this, blackboard);
+        // 初始化时持久化状态
+        persistState();
 
         // 初始化时更新位置到Redis
-        RedisConnector.updateCarPosition(carId, new Point(0, 0));
+        updateCarPositionToRedis();
+    }
+
+    /**
+     * 从Redis加载小车实例
+     * 
+     * @param carId 小车ID
+     * @return 小车实例，如果不存在则返回null
+     */
+    private Car loadCarFromRedis(String carId) {
+        try {
+            // 使用RedisUtil获取小车数据
+            // 注意：RedisUtil的Car类与当前项目的Car类不同，需要进行转换
+            cn.edu.ncepu.Car redisCar = redisUtil.getCar(Integer.parseInt(carId));
+
+            if (redisCar == null) {
+                return null;
+            }
+
+            // 将RedisUtil的Car对象转换为当前项目的Car对象
+            Car loadedCar = Car.builder()
+                    .carId(carId)
+                    .carStatus(convertCarStatus(redisCar.getCarStatus()))
+                    .carPosition(convertPoint(redisCar.getCarPosition()))
+                    .carTarget(convertPoint(redisCar.getCarTarget()))
+                    .carPath(redisCar.getCarPath())
+                    .carStatusCnt(redisCar.getCarStatusCnt())
+                    .carLastRunTime(redisCar.getCarLastRunTime())
+                    .carColor("blue") // 默认颜色，因为RedisUtil的Car类可能没有getCarColor方法
+                    .build();
+
+            // 更新心跳时间为当前时间
+            loadedCar.setCarLastRunTime(System.currentTimeMillis());
+            return loadedCar;
+        } catch (Exception e) {
+            log.error("从Redis加载小车 {} 失败", carId, e);
+            return null;
+        }
+    }
+
+    /**
+     * 转换RedisUtil的Point对象为当前项目的Point对象
+     */
+    private Point convertPoint(java.awt.Point awtPoint) {
+        if (awtPoint == null) {
+            return null;
+        }
+        return new Point(awtPoint.x, awtPoint.y);
+    }
+
+    /**
+     * 转换RedisUtil的CarStatusEnum为当前项目的CarStatusEnum
+     */
+    private CarStatusEnum convertCarStatus(cn.edu.ncepu.CarStatusEnum redisStatus) {
+        if (redisStatus == null) {
+            return CarStatusEnum.FREE;
+        }
+
+        switch (redisStatus) {
+            case FREE:
+                return CarStatusEnum.FREE;
+            case RUNNING:
+                return CarStatusEnum.RUNNING;
+            case SEARCHING:
+                return CarStatusEnum.SEARCHING;
+            case WAIT_NAV:
+                return CarStatusEnum.WAIT_NAV;
+            case NAVIGATING:
+                return CarStatusEnum.NAVIGATING;
+            case WAITING:
+                return CarStatusEnum.WAITING;
+            case DISCONNECTING:
+                return CarStatusEnum.DISCONNECTING;
+            default:
+                return CarStatusEnum.FREE;
+        }
+    }
+
+    /**
+     * 转换当前项目的CarStatusEnum为RedisUtil的CarStatusEnum
+     */
+    private cn.edu.ncepu.CarStatusEnum convertToRedisCarStatus(CarStatusEnum status) {
+        if (status == null) {
+            return cn.edu.ncepu.CarStatusEnum.FREE;
+        }
+
+        switch (status) {
+            case FREE:
+                return cn.edu.ncepu.CarStatusEnum.FREE;
+            case RUNNING:
+                return cn.edu.ncepu.CarStatusEnum.RUNNING;
+            case SEARCHING:
+                return cn.edu.ncepu.CarStatusEnum.SEARCHING;
+            case WAIT_NAV:
+                return cn.edu.ncepu.CarStatusEnum.WAIT_NAV;
+            case NAVIGATING:
+                return cn.edu.ncepu.CarStatusEnum.NAVIGATING;
+            case WAITING:
+                return cn.edu.ncepu.CarStatusEnum.WAITING;
+            case DISCONNECTING:
+                return cn.edu.ncepu.CarStatusEnum.DISCONNECTING;
+            default:
+                return cn.edu.ncepu.CarStatusEnum.FREE;
+        }
     }
 
     @Override
@@ -67,10 +202,9 @@ public class CarComponent implements IComponent {
         scheduler = Executors.newScheduledThreadPool(2);
         log.info("小车组件 {} 已初始化", carId);
 
-        // 尝试从黑板恢复状态
-        if (!stateManager.restoreState()) {
-            // 如果无法恢复，则持久化当前状态
-            stateManager.persistState();
+        // 如果有路径，则设置到路径执行器
+        if (car.getCarPath() != null && !car.getCarPath().isEmpty()) {
+            pathExecutor.setPath(car.getCarPath());
         }
     }
 
@@ -79,11 +213,8 @@ public class CarComponent implements IComponent {
         // 启动心跳任务
         startHeartbeat();
 
-        // 启动状态计数器检查任务
-        startStatusCounterCheck();
-
-        // 启动消息处理器
-        messageHandler.start();
+        // 启动状态检查任务
+        startStatusCheck();
 
         log.info("小车组件 {} 已启动", carId);
     }
@@ -94,22 +225,21 @@ public class CarComponent implements IComponent {
             heartbeatFuture.cancel(true);
         }
 
-        if (statusCounterFuture != null) {
-            statusCounterFuture.cancel(true);
+        if (statusCheckFuture != null) {
+            statusCheckFuture.cancel(true);
         }
 
         if (scheduler != null) {
             scheduler.shutdown();
         }
 
-        // 停止移动
-        movementController.stop();
-
-        // 停止消息处理器
-        messageHandler.stop();
-
-        // 从Redis移除小车位置
-        RedisConnector.removeCarPosition(carId);
+        // 关闭Redis连接
+        try {
+            redisUtil.close();
+            log.info("Redis连接已关闭");
+        } catch (Exception e) {
+            log.error("关闭Redis连接失败: {}", e.getMessage());
+        }
 
         log.info("小车组件 {} 已停止", carId);
     }
@@ -126,126 +256,292 @@ public class CarComponent implements IComponent {
         return carId;
     }
 
+    /**
+     * 启动心跳任务
+     */
     private void startHeartbeat() {
         heartbeatFuture = scheduler.scheduleAtFixedRate(() -> {
             try {
+                // 更新心跳时间
                 car.setCarLastRunTime(System.currentTimeMillis());
-                stateManager.persistState();
-                messageSender.sendHeartbeat();
+                // 持久化状态到Redis
+                persistState();
+                log.debug("小车 {} 心跳更新", carId);
             } catch (Exception e) {
                 log.error("小车 {} 的心跳任务出错", carId, e);
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
-    private void startStatusCounterCheck() {
-        statusCounterFuture = scheduler.scheduleAtFixedRate(() -> {
+    /**
+     * 启动状态检查任务
+     */
+    private void startStatusCheck() {
+        statusCheckFuture = scheduler.scheduleAtFixedRate(() -> {
             try {
-                stateManager.decrementStatusCounter();
+                // 检查carPath是否为空
+                if (car.getCarPath() == null || car.getCarPath().isEmpty()) {
+                    if (car.getCarStatus() == CarStatusEnum.RUNNING) {
+                        stateManager.changeState(CarStatusEnum.FREE);
+                        log.info("小车 {} 路径为空，切换到空闲状态", carId);
+                    }
+                    return;
+                }
+
+                // 检查状态计数器
+                if (car.getCarStatus() != CarStatusEnum.RUNNING) {
+                    stateManager.decrementStatusCounter();
+                }
+
+                // 如果状态为RUNNING，执行路径
+                if (car.getCarStatus() == CarStatusEnum.RUNNING && pathExecutor.hasRemainingPath()) {
+                    boolean moveSuccess = pathExecutor.executeNextStep();
+                    if (moveSuccess) {
+                        // 点亮地图
+                        updateMap();
+                        // 更新Redis中的小车位置
+                        updateCarPositionToRedis();
+                    } else {
+                        // 处理路径执行失败
+                        stateManager.changeState(CarStatusEnum.WAITING);
+                        log.info("小车 {} 当前步骤不可走，切换到等待状态", carId);
+                    }
+                }
             } catch (Exception e) {
-                log.error("小车 {} 的状态计数器检查任务出错", carId, e);
+                log.error("小车 {} 的状态检查任务出错", carId, e);
             }
-        }, 1000, 1000, TimeUnit.MILLISECONDS);
+        }, 500, 500, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * 更新位置
+     * 点亮地图
+     * 通过获取迷雾地图，更新小车周围九宫格，然后保存回Redis
      */
-    public void updatePosition(int x, int y) {
-        Point newPosition = new Point(x, y);
-        car.setCarPosition(newPosition);
-        stateManager.persistState();
+    private void updateMap() {
+        try {
+            Point position = car.getCarPosition();
+            int x = position.getX();
+            int y = position.getY();
 
-        // 更新位置到Redis
-        RedisConnector.updateCarPosition(carId, newPosition);
+            try {
+                // 获取地图尺寸
+                int mapWidth = redisUtil.getInt("mapWidth");
+                int mapHeight = redisUtil.getInt("mapHeight");
 
-        // 记录移动日志
-        messageSender.sendLogMessage("移动", String.format("位置已更新到 (%d,%d)", x, y));
-    }
+                // 获取迷雾地图
+                int[][] fogMap = redisUtil.getMap("mapFog", mapHeight, mapWidth);
 
-    /**
-     * 更新路径
-     */
-    public void updatePath(String path) {
-        car.setCarPath(path);
-        stateManager.persistState();
+                // 更新小车周围的九宫格
+                for (int i = -1; i <= 1; i++) {
+                    for (int j = -1; j <= 1; j++) {
+                        int newX = x + i;
+                        int newY = y + j;
 
-        // 记录路径日志
-        messageSender.sendLogMessage("导航", "路径已更新为 " + path);
-    }
+                        // 检查坐标是否在地图范围内
+                        if (newX >= 0 && newX < mapWidth && newY >= 0 && newY < mapHeight) {
+                            fogMap[newY][newX] = 1; // 设置为已探索
+                        }
+                    }
+                }
 
-    /**
-     * 更新目标
-     */
-    public void updateTarget(int x, int y) {
-        car.setCarTarget(new Point(x, y));
-        stateManager.persistState();
+                // 保存更新后的迷雾地图回Redis
+                redisUtil.setMap("mapFog", fogMap);
+                log.debug("小车 {} 点亮地图位置 ({},{}) 及周围九宫格", carId, x, y);
+            } catch (Exception e) {
+                log.warn("使用Redis点亮地图失败: {}", e.getMessage());
+            }
 
-        // 记录目标日志
-        messageSender.sendLogMessage("目标", String.format("目标已更新到 (%d,%d)", x, y));
-    }
-
-    /**
-     * 更新状态
-     */
-    public boolean updateStatus(CarStatusEnum status) {
-        boolean result = stateManager.changeState(status);
-        if (result) {
-            // 记录状态变更日志
-            messageSender.sendLogMessage("状态", "状态已变更为 " + status.name());
+            // 同时记录当前位置到Redis
+            redisUtil.setString(MAP_LIGHT_KEY_PREFIX + carId, position.getX() + "," + position.getY());
+        } catch (Exception e) {
+            log.error("小车 {} 点亮地图失败", carId, e);
         }
+    }
+
+    /**
+     * 更新小车位置到Redis
+     */
+    private void updateCarPositionToRedis() {
+        try {
+            Point position = car.getCarPosition();
+            // 使用Redis记录位置
+            redisUtil.setString(CAR_POSITION_KEY_PREFIX + carId, position.getX() + "," + position.getY());
+            log.debug("小车 {} 位置已更新到Redis: ({},{})", carId, position.getX(), position.getY());
+        } catch (Exception e) {
+            log.error("小车 {} 更新位置到Redis失败", carId, e);
+        }
+    }
+
+    /**
+     * 持久化小车状态到Redis
+     */
+    public void persistState() {
+        try {
+            // 将当前项目的Car对象转换为RedisUtil的Car对象
+            java.awt.Point position = new java.awt.Point(
+                    car.getCarPosition().getX(),
+                    car.getCarPosition().getY());
+
+            java.awt.Point target = null;
+            if (car.getCarTarget() != null) {
+                target = new java.awt.Point(
+                        car.getCarTarget().getX(),
+                        car.getCarTarget().getY());
+            }
+
+            cn.edu.ncepu.Car redisCar = new cn.edu.ncepu.Car(
+                    Integer.parseInt(carId),
+                    convertToRedisCarStatus(car.getCarStatus()),
+                    position,
+                    target,
+                    car.getCarPath(),
+                    null, // 算法暂不设置
+                    car.getCarStatusCnt(),
+                    car.getCarColor(), // 使用当前小车的颜色
+                    car.getCarLastRunTime());
+
+            // 使用RedisUtil保存小车状态
+            redisUtil.setCar(redisCar);
+
+            // 同时使用状态管理器持久化状态到Redis
+            try {
+                String carJson = objectMapper.writeValueAsString(car);
+                redisUtil.setString("car:" + carId, carJson);
+            } catch (Exception e) {
+                log.error("序列化小车状态失败: {}", e.getMessage(), e);
+            }
+
+            log.debug("小车 {} 状态已持久化到Redis", carId);
+        } catch (Exception e) {
+            log.error("小车 {} 持久化状态失败", carId, e);
+        }
+    }
+
+    /**
+     * 设置路径 - 接收导航器传来的路径
+     */
+    public boolean setPath(String path) {
+        if (path == null || path.isEmpty()) {
+            log.warn("小车 {} 收到空路径", carId);
+            return false;
+        }
+
+        // 设置路径到路径执行器
+        boolean result = pathExecutor.setPath(path);
+        if (result) {
+            // 更新小车状态
+            car.setCarPath(path);
+            stateManager.changeState(CarStatusEnum.RUNNING);
+            log.info("小车 {} 设置路径: {}, 切换到运行状态", carId, path);
+        }
+
         return result;
     }
 
     /**
-     * 执行移动
+     * 获取小车当前状态
      */
-    public boolean move(String direction) {
-        boolean result = movementController.move(direction);
-        if (result) {
-            // 记录移动日志
-            messageSender.sendLogMessage("移动", "已向 " + direction + " 方向移动");
-        } else {
-            // 发送错误消息
-            messageSender.sendErrorMessage("移动错误", "向 " + direction + " 方向移动失败");
-        }
-        return result;
-    }
-
-    /**
-     * 执行路径
-     */
-    public boolean executePath(String path) {
-        updatePath(path);
-        boolean result = movementController.executePath(path);
-        if (result) {
-            // 记录路径执行日志
-            messageSender.sendLogMessage("导航", "正在执行路径 " + path);
-        } else {
-            // 发送错误消息
-            messageSender.sendErrorMessage("导航错误", "执行路径 " + path + " 失败");
-        }
-        return result;
-    }
-
-    /**
-     * 获取当前小车状态
-     */
-    public CarStatusEnum getCurrentStatus() {
+    public CarStatusEnum getStatus() {
         return car.getCarStatus();
     }
 
     /**
-     * 获取小车对象
+     * 获取小车当前位置
      */
-    public Car getCar() {
-        return car;
+    public Point getPosition() {
+        return car.getCarPosition();
     }
 
     /**
-     * 获取消息发送器
+     * 移动小车（根据方向）
+     * 
+     * @param direction 移动方向（U, D, L, R）
+     * @return 是否移动成功
      */
-    public CarMessageSender getMessageSender() {
-        return messageSender;
+    public boolean move(String direction) {
+        if (direction == null || direction.isEmpty()) {
+            return false;
+        }
+
+        // 检查是否可以移动到新位置
+        if (!collisionDetector.canMoveToDirection(car, direction)) {
+            log.warn("小车 {} 无法向 {} 方向移动，该位置不可通行", carId, direction);
+            return false;
+        }
+
+        // 根据方向计算新位置
+        Point currentPosition = car.getCarPosition();
+        Point newPosition = new Point(currentPosition.getX(), currentPosition.getY());
+
+        // 根据方向移动
+        switch (direction.toUpperCase()) {
+            case "U":
+                newPosition.setY(newPosition.getY() - 1);
+                break;
+            case "D":
+                newPosition.setY(newPosition.getY() + 1);
+                break;
+            case "L":
+                newPosition.setX(newPosition.getX() - 1);
+                break;
+            case "R":
+                newPosition.setX(newPosition.getX() + 1);
+                break;
+            default:
+                log.warn("小车 {} 收到无效的移动方向: {}", carId, direction);
+                return false;
+        }
+
+        // 更新位置
+        car.setCarPosition(newPosition);
+
+        // 更新地图和Redis
+        updateMap();
+        updateCarPositionToRedis();
+        persistState();
+
+        log.info("小车 {} 移动到位置 ({},{})", carId, newPosition.getX(), newPosition.getY());
+        return true;
+    }
+
+    /**
+     * 更新小车状态
+     * 
+     * @param status 新状态
+     */
+    public void updateStatus(CarStatusEnum status) {
+        stateManager.changeState(status);
+    }
+
+    /**
+     * 执行路径
+     * 
+     * @param path 路径字符串
+     * @return 是否成功设置路径
+     */
+    public boolean executePath(String path) {
+        return setPath(path);
+    }
+
+    /**
+     * 更新目标位置
+     * 
+     * @param x X坐标
+     * @param y Y坐标
+     */
+    public void updateTarget(int x, int y) {
+        Point target = new Point(x, y);
+        car.setCarTarget(target);
+        persistState();
+        log.info("小车 {} 目标位置更新为 ({},{})", carId, x, y);
+    }
+
+    /**
+     * 获取当前状态
+     * 
+     * @return 当前状态枚举
+     */
+    public CarStatusEnum getCurrentStatus() {
+        return car.getCarStatus();
     }
 }

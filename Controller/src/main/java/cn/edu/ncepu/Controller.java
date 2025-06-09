@@ -1,6 +1,6 @@
-package cn.edu.necpu;
+package cn.edu.ncepu;
 
-import cn.edu.necpu.Model.ExploreMessage;
+import cn.edu.ncepu.Model.ExploreMessage;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;
 
@@ -92,7 +92,7 @@ public class Controller {
                     for (int i = 0; i < carNumber; i++) {
                         Car car = redisUtil.getCar(i + 1);
                         CarStatusEnum carStatus = car.getCarStatus();
-                        int carStatusCnt = car.getCarStatusCnt();
+//                        int carStatusCnt = car.getCarStatusCnt();
 
                         // 断联状态
                         if (CarStatusEnum.DISCONNECTING == carStatus) continue;
@@ -106,14 +106,14 @@ public class Controller {
                             continue;
                         }
 
-                        // 检查自身周期，周期为零时，可能需要进行状态回退
-                        carStatusCnt--;
-                        if (carStatusCnt < 1) {
-                            switch (car.getCarStatus()) {
-                                case SEARCHING -> car.setCarStatus(CarStatusEnum.FREE);
-                                case NAVIGATING, WAITING -> car.setCarStatus(CarStatusEnum.WAIT_NAV);
-                            }
-                        }
+//                        // 检查自身周期，周期为零时，可能需要进行状态回退
+//                        carStatusCnt--;
+//                        if (carStatusCnt < 1) {
+//                            switch (car.getCarStatus()) {
+//                                case SEARCHING -> car.setCarStatus(CarStatusEnum.FREE);
+//                                case NAVIGATING, WAITING -> car.setCarStatus(CarStatusEnum.WAIT_NAV);
+//                            }
+//                        }
 
                         // 分发任务，设置小车状态
                         switch (car.getCarStatus()) {
@@ -137,10 +137,10 @@ public class Controller {
                                         , "navigator.fair.routing.key"
                                         , String.valueOf(car.getCarId()));
                             }
-                            case SEARCHING, NAVIGATING, WAITING -> {
-                                car.setCarStatusCnt(carStatusCnt);
-                                redisUtil.setCar(car);
-                            }
+//                            case SEARCHING, NAVIGATING, WAITING -> {
+//                                car.setCarStatusCnt(carStatusCnt);
+//                                redisUtil.setCar(car);
+//                            }
                         }
                     }
 

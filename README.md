@@ -4,7 +4,7 @@
 
 1. 探索子系统
 
-	- 控制器 
+	- 控制器
 	- 导航器
 	- 小车
 	- View （）
@@ -13,8 +13,8 @@
 2. 探索日志
 
 3. 回放子系统
-	
-	流程:UI在Redis给playbackTime,回放器周期监听playbackTime,向Redis加载相应的帧信息,加载完成后给view发送update
+
+   流程:UI在Redis给playbackTime,回放器周期监听playbackTime,向Redis加载相应的帧信息,加载完成后给view发送update
 	- 回放器
 	- View（）
 
@@ -34,10 +34,10 @@
 	- 写系统日志
 
 6. 分析子系统
-	
+
 	- Car的路径生成时间(折线图  横坐标:导航次数  纵坐标:导航时间)
-    - 算法的比较(柱状图 横坐标:算法类型  纵坐标:算法平均时间)
-    - 不同实验的运行试验比较(配置信息+实验运行时间 只能选择两个实验之间的比较)
+	- 算法的比较(柱状图 横坐标:算法类型  纵坐标:算法平均时间)
+	- 不同实验的运行试验比较(配置信息+实验运行时间 只能选择两个实验之间的比较)
 
 ### 任务分配
 
@@ -263,9 +263,27 @@ isWork 的所有状态：
 #### Controller 发 小车移动消息
 
 ```javascript
-1_CarMoveQueue
+1.car.exchange /广播模式
 {
-	car[Id] : int
+	"run"
+}
+```
+
+#### Controller 发 View更新消息
+
+```javascript
+1.view.exchange /广播模式
+{
+	"update"
+}
+```
+
+#### Controller 发 ExploreLog记录消息
+
+```javascript
+1.view.exchange /广播模式
+{
+	ExploreMessage : {}
 }
 ```
 
@@ -275,11 +293,12 @@ isWork 的所有状态：
 
 **导航器 发 探索日志**
 ```javascript
-1.naviAnalysisLog.exchange / 广播模式
+1.exploreLog.exchange / 广播模式
 {
-	AnalysisLog : {}
+	ExploreMessage : {}
 }
 ```
+
 
 ### 关系数据库
 
@@ -298,7 +317,7 @@ User
 |  examineTime  |  DateTime   |    审核时间，可null    |
 | examineUserId |     外键      |   审核人Id，可null    |
 
-UserRoleEnum 
+UserRoleEnum
 
 |字段名|数据类型|说明|
 |:-:|:-:|:-:|

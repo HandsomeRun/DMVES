@@ -1,8 +1,6 @@
 package cn.edu.ncepu;
 
-import cn.edu.necpu.Car;
-import cn.edu.necpu.Model.RunLog;
-import cn.edu.necpu.RedisUtil;
+import cn.edu.ncepu.Model.RunLog;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;
 

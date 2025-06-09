@@ -1,4 +1,4 @@
-package cn.edu.necpu;
+package cn.edu.ncepu;
 
 import com.google.gson.Gson;
 import redis.clients.jedis.Jedis;
@@ -136,8 +136,8 @@ public class RedisUtil {
      */
     public Car getCar(int carId) {
         String key = groupId + "_Car" + String.valueOf(carId);
-        waitRead(key);  //等待读锁
         Gson gson = new Gson();
+        waitRead(key);  //等待读锁
         String res = _jedis.get(key);
         signalRead(key);  //释放读锁
         return gson.fromJson(res, Car.class);
@@ -270,6 +270,11 @@ public class RedisUtil {
         signalWrite(key);
     }
 
+    /**
+     * 新增一辆僵尸小车
+     *
+     * @param carId 小车Id
+     */
     public void addDisConnectCar(int carId) {
         String key = groupId + "_disConnectCars";
         waitWrite(key);
@@ -291,7 +296,7 @@ public class RedisUtil {
      * 将<key,value>存到redis
      *
      * @param key   键
-     * @param value 至
+     * @param value 值
      */
     public void setString(String key, String value) {
         _jedis.set(key, value);
@@ -300,9 +305,9 @@ public class RedisUtil {
     /**
      * P操作，写锁  普通互斥锁用writeLock即可
      *
-     * @param key 锁名称
+     * @param key 对应键
      */
-    private void waitWrite(String key) {
+    public void waitWrite(String key) {
         String writeLockName = key + "_writeLock";
         if (_jedis.exists(writeLockName)) {
             while (Objects.equals(_jedis.get(writeLockName), "0")) {
@@ -319,7 +324,7 @@ public class RedisUtil {
     /**
      * P操作，写锁
      *
-     * @param key 锁名称
+     * @param key 对应键
      */
     public void waitRead(String key) {
         String readLockName = key + "_readLock";
@@ -330,16 +335,16 @@ public class RedisUtil {
     /**
      * V操作，写锁
      *
-     * @param key 锁名称
+     * @param key 对应键
      */
-    private void signalWrite(String key) {
+    public void signalWrite(String key) {
         _jedis.set(key + "_writeLock", "1");
     }
 
     /**
      * V操作，读锁
      *
-     * @param key 锁名称
+     * @param key 对应键
      */
     public void signalRead(String key) {
         String readLockName = key + "_readLock";

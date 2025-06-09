@@ -10,7 +10,9 @@ public enum CarStatusEnum {
     SEARCHING("寻找目标中"),
     WAIT_NAV("待导航"),
     NAVIGATING("导航中"),
-    WAITING("遇到小车等待中");
+    WAITING("遇到小车等待中"),
+    OBSTACLE_DETECTED("检测到障碍"),
+    RETURNING("回退中");
 
     private final String description;
 
