@@ -77,6 +77,8 @@ public class NavigatorMain {
         receiver.receiveFairMessage(EXCHANGE_NAME, QUEUE_NAME, new MessageHandler() {
             @Override
             public void handleMessage(String message) {
+                System.out.println("原消息为 ： " + message);
+
                 System.out.println("[Navigator] 收到MQ消息: " + message);
                 handleCarMessage(message);
             }
@@ -132,9 +134,7 @@ public class NavigatorMain {
     // 3.2.1 解析消息，获取Car
     private static Car getCarFromMessage(String message) {
         try {
-            Gson gson = new Gson();
-            Map<String, Object> map = gson.fromJson(message, Map.class);
-            int carId = Integer.parseInt(map.get("carId").toString());
+            int carId = Integer.parseInt(message);
             return redisUtil.getCar(carId);
         } catch (Exception e) {
             e.printStackTrace();

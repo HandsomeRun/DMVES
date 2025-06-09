@@ -56,7 +56,7 @@ public class TargetMain {
             public void run() {
                 try {
                     long now = System.currentTimeMillis();
-                    redisUtil.setString(REDIS_TARGET_KEY, String.valueOf(now));
+                    redisUtil.setTimeStamp(REDIS_TARGET_KEY, now);
                     System.out.println("[Target] 写入 Target 时间戳: " + now);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -98,13 +98,10 @@ public class TargetMain {
     // 1. 解析 carId
     private static int parseCarId(String message) {
         try {
-            // 假设消息格式为 {"carId":"123"}
-            Map<?,?> map = gson.fromJson(message, Map.class);
-            String carIdStr = map.get("carId").toString();
+            // 假设消息格式为 {1}
+            System.out.println("原消息为 ： " + message);
 
-            System.out.println("接受到消息 ： " + message + "\n 小车id为 ： " + carIdStr );
-
-            return Integer.parseInt(carIdStr);
+            return Integer.parseInt(message);
         } catch (Exception e) {
             e.printStackTrace();
             return -1;

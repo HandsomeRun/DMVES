@@ -296,7 +296,7 @@ public class RedisUtil {
      * @param value 至
      */
     public void setString(String key, String value) {
-        _jedis.set(key, value);
+        _jedis.set(groupId + "_" + key, value);
     }
 
     /**
