@@ -5,8 +5,9 @@ import cn.edu.necpu.Car.CarStatusEnum;
 import cn.edu.necpu.Car.CarAlgorithmEnum;
 import cn.edu.necpu.Redis.RedisUtil;
 import com.google.gson.Gson;
-import rabbitmq.impl.Receiver;
-import rabbitmq.interfaces.MessageHandler;
+import com.rabbitmq.impl.Receiver;
+import com.rabbitmq.interfaces.MessageHandler;
+import cn.edu.necpu.HandsomeRun.CarAlgorithm.*;
 
 import java.awt.Point;
 import java.util.*;
@@ -81,12 +82,22 @@ public class NavigatorMain {
             return;
         }
         System.out.println("[Navigator] 处理Car: " + car.getCarId());
+        System.out.println(car.toString());
         // 3.2.2 获取并合成地图
         MapData mapData = getMergedMap();
         if (mapData == null) {
             System.err.println("[Navigator] 获取地图失败");
             return;
         }
+
+        for(int i = 0 ; i < mapData.mapHeight ; i ++ ){
+            for(int j = 0 ; j < mapData.mapWidth ; j ++ ) {
+                System.out.print(mapData.mapMerge[i][j] + " ");
+            }
+            System.out.println();
+        }
+
+
         // 3.2.3 地图划分与定位
         SubMapInfo subMapInfo = locateCarAndTarget(car, mapData);
         if (subMapInfo == null) {
@@ -189,13 +200,13 @@ public class NavigatorMain {
 
     // 3.2.5 选择算法并寻路，返回UDRL字符串
     private static String calculatePath(Car car, MapSearchInfo mapSearchInfo, MapData mapData) {
-        cn.edu.necpu.HandsomeRun.CarAlgorithm.ICarAlgorithm algorithm;
+        CarAlgorithm algorithm;
         if (car.getCarAlgorithm() == CarAlgorithmEnum.ASTART) {
-            algorithm = new cn.edu.necpu.HandsomeRun.CarAlgorithm.CarAlgorithmAStart();
+            algorithm = new CarAlgorithmAStart();
         } else if (car.getCarAlgorithm() == CarAlgorithmEnum.BFS) {
-            algorithm = new cn.edu.necpu.HandsomeRun.CarAlgorithm.CarAlgorithmBFS();
+            algorithm = new CarAlgorithmBFS();
         } else {
-            algorithm = new cn.edu.necpu.HandsomeRun.CarAlgorithm.CarAlgorithm();
+            algorithm = new CarAlgorithm();
         }
         String path = algorithm.calculatePathUDRL(car.getCarPosition(), car.getCarTarget(), mapData.mapMerge, mapSearchInfo.leftTop, mapSearchInfo.rightBottom);
         System.out.println("[Navigator] 规划路径(UDRL): " + path);
@@ -209,6 +220,7 @@ public class NavigatorMain {
         car.setCarPath(path);
         redisUtil.setCar(car);
         System.out.println("[Navigator] 路径已写回Redis: " + path);
+        System.out.println(car.toString());
     }
 
     // 工具方法：获取点所在子地图块索引

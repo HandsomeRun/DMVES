@@ -1,4 +1,4 @@
-package rabbitmq.interfaces;
+package com.rabbitmq.interfaces;
 
 public interface MessageHandler {
     /**

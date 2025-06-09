@@ -1,4 +1,4 @@
-package rabbitmq.config;
+package com.rabbitmq.config;
 
 public class RabbitMQConfig {
     private String host;

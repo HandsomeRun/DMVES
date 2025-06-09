@@ -1,4 +1,4 @@
-package rabbitmq.config;
+package com.rabbitmq.config;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
