@@ -278,10 +278,10 @@ isWork 的所有状态：
 }
 ```
 
-#### Controller 发 ExploreLog记录消息
+#### Controller 发 ExploreLog 记录消息
 
 ```javascript
-1.view.exchange /广播模式
+1.exploreLog.exchange /广播模式
 {
 	ExploreMessage : {}
 }
