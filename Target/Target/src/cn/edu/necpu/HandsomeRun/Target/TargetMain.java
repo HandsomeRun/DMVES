@@ -6,6 +6,7 @@ import cn.edu.necpu.Car.Car;
 import com.google.gson.Gson;
 import com.rabbitmq.impl.Receiver;
 
+import java.awt.*;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 public class TargetMain {
     private static final String REDIS_TARGET_KEY = "Target";
-    private static final int INTERVAL_SECONDS = 60;
+    private static final int INTERVAL_SECONDS = 2;
     private static final int SUBMAP_SIZE = 20;
     private static final String EXCHANGE_NAME = "1.target.exchange";
     private static final String QUEUE_NAME = "1.target.queue";
@@ -56,7 +57,7 @@ public class TargetMain {
                 try {
                     long now = System.currentTimeMillis();
                     redisUtil.setString(REDIS_TARGET_KEY, String.valueOf(now));
-                    System.out.println("[Timer] 写入 Target 时间戳: " + now);
+                    System.out.println("[Target] 写入 Target 时间戳: " + now);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -190,7 +191,7 @@ public class TargetMain {
         int targetX = -1, targetY = -1;
         for (int x = leftTopX; x <= rightBottomX; x++) {
             for (int y = leftTopY; y <= rightBottomY; y++) {
-                if (mapMerge[x][y] == 0) {
+                if (mapMerge[x][y] == 2) {
                     int count = countSurrounding2(mapMerge, x, y);
                     if (count > maxCount) {
                         maxCount = count;
@@ -237,7 +238,7 @@ public class TargetMain {
         int maxCount = -1, targetX = -1, targetY = -1;
         for (int x = leftTopX; x <= rightBottomX; x++) {
             for (int y = leftTopY; y <= rightBottomY; y++) {
-                if (mapMerge[x][y] == 0) {
+                if (mapMerge[x][y] == 2) {
                     int count = countSurrounding2(mapMerge, x, y);
                     if (count > maxCount) {
                         maxCount = count;
@@ -266,7 +267,6 @@ public class TargetMain {
     // 7. 更新 Car 状态与目标，写回 Redis
     private static void updateCarTarget(Car car, int[] target) {
         System.out.println("开始更新小车状态");
-
         if (target[0] == -1 || target[1] == -1) return;
         car.setCarStatus(CarStatusEnum.WAIT_NAV);
         car.setCarTarget(new java.awt.Point(target[0], target[1]));

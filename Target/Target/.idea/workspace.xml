@@ -5,16 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8246b133-c7bc-4304-95d0-759c9aa0998f" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/NavigatorMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/NavigatorMain.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/config/MQConfigHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/config/MQConfigHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/config/RabbitMQConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/config/RabbitMQConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/impl/Receiver.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/impl/Receiver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/impl/Sender.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/impl/Sender.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/interfaces/IReceiver.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/interfaces/IReceiver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/interfaces/ISender.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/interfaces/ISender.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/rabbitmq/interfaces/MessageHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/com/rabbitmq/interfaces/MessageHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/Car/Car.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/ncepu/Car/Car.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/Car/CarAlgorithmEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/ncepu/Car/CarAlgorithmEnum.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/Car/CarStatusEnum.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/ncepu/Car/CarStatusEnum.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/CarAlgorithm/CarAlgorithm.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/CarAlgorithm/CarAlgorithmAStart.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/CarAlgorithm/CarAlgorithmBFS.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/CarAlgorithm/ICarAlgorithm.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/HandsomeRun/NavigatorMain.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/ncepu/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/necpu/Redis/RedisUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Navigator/Navigator/src/cn/edu/ncepu/Redis/RedisUtil.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cn/edu/necpu/HandsomeRun/Target/TargetMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/cn/edu/necpu/HandsomeRun/Target/TargetMain.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

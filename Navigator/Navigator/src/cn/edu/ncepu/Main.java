@@ -1,6 +1,6 @@
-package cn.edu.necpu;
+package cn.edu.ncepu;
 
-import cn.edu.necpu.Redis.RedisUtil;
+import cn.edu.ncepu.Redis.RedisUtil;
 
 import java.util.UUID;
 
