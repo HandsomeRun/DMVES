@@ -181,6 +181,7 @@ UserRoleEnum : {
 	carColor : String | Color ,
 	carLastRunTime : Long  // 小车心跳,控制器需要每个周期都检测
 }
+
 ```
 
 #### 小车状态
