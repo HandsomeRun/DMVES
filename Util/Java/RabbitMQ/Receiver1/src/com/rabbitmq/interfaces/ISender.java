@@ -27,6 +27,14 @@ public interface ISender {
     void sendFairMessage(String exchangeName,String routingKey, String message);
 
     /**
+     * 发送 DMVES 业务消息
+     * @param scrName 发送方名称
+     * @param destName 接收方名称
+     * @param message 消息内容
+     */
+    void DMVESSenderMessage(String scrName, String destName, String message);
+
+    /**
      * 关闭连接
      */
     void close() throws IOException, TimeoutException;

@@ -7,10 +7,8 @@ import com.google.gson.Gson;
 import com.rabbitmq.impl.Receiver;
 
 import java.awt.*;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.List;
 
 public class TargetMain {
     private static final String REDIS_TARGET_KEY = "Target";
