@@ -233,7 +233,7 @@ CarStatusEnum : {
 
 2. 实验结束 Controller 向 Redis 发 `isWork = 已完成`
 
-3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `errorData` 读取故障原因。
+3. 实验过程中 Controller 和 UI 向 Redis 发 `isWork = 故障` 
 
 4. 实验暂停 前台 向 Redis 发 `isWork = 未运行`
 
@@ -242,6 +242,7 @@ isWork 的所有状态：
 - 运行中
 - 故障
 - 已完成
+- 强制结束(UI检测到没心跳,可强强制结束实验)
 
 #### Controller 发 请求终点消息
 
