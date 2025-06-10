@@ -75,10 +75,9 @@ public class RedisUtil {
      * @return Redis中isWork的值，未运行、运行中、故障、已完成
      */
     public String getIsWork() {
-        String key = groupId + "_isWork";
-        waitWrite(key);
-        String res = _jedis.get(key);
-        signalWrite(key);
+        waitWrite("isWork");
+        String res = _jedis.get(groupId + "_isWork");
+        signalWrite("isWork");
         return res;
     }
 
@@ -99,10 +98,9 @@ public class RedisUtil {
      * @return 一个int值
      */
     public int getIntByLock(String key) {
-        String redisKey = groupId + "_" + key;
-        waitWrite(redisKey);
-        String res = _jedis.get(redisKey);
-        signalWrite(redisKey);
+        waitWrite(key);
+        String res = _jedis.get(groupId + "_" + key);
+        signalWrite(key);
         return Integer.parseInt(res);
     }
 
@@ -136,10 +134,10 @@ public class RedisUtil {
      * @return 一个Car对象
      */
     public Car getCar(int carId) {
-        String key = groupId + "_Car" + String.valueOf(carId);
+        String key = "Car" + String.valueOf(carId);
         Gson gson = new Gson();
         waitRead(key);  //等待读锁
-        String res = _jedis.get(key);
+        String res = _jedis.get(groupId + "_" + key);
         signalRead(key);  //释放读锁
         return gson.fromJson(res, Car.class);
     }
@@ -150,10 +148,9 @@ public class RedisUtil {
      * @return 僵尸队列
      */
     public Set<Integer> getDisConnectCars() {
-        String key = groupId + "_disConnectCars";
-        waitWrite(key);
-        Set<String> stringSet = _jedis.smembers(key);
-        signalWrite(key);
+        waitWrite("disConnectCars");
+        Set<String> stringSet = _jedis.smembers(groupId + "_disConnectCars");
+        signalWrite("disConnectCars");
         Set<Integer> disConnectCars = new HashSet<>();
         for (String s : stringSet) {
             try {
@@ -211,10 +208,9 @@ public class RedisUtil {
      * @param value 需要写入的值，int
      */
     public void setIntByLock(String key, int value) {
-        String redisKey = groupId + "_" + key;
-        waitWrite(redisKey);
-        _jedis.set(redisKey, String.valueOf(value));
-        signalWrite(redisKey);
+        waitWrite(key);
+        _jedis.set(groupId + "_" + key, String.valueOf(value));
+        signalWrite(key);
     }
 
     /**
@@ -248,10 +244,10 @@ public class RedisUtil {
      */
     public void setCar(Car car) {
         int carId = car.getCarId();
-        String key = groupId + "_Car" + String.valueOf(carId);
+        String key = "Car" + String.valueOf(carId);
         waitWrite(key);
         Gson gson = new Gson();
-        _jedis.set(key, gson.toJson(car));
+        _jedis.set(groupId + "_" + key, gson.toJson(car));
         signalWrite(key);
     }
 
@@ -261,14 +257,14 @@ public class RedisUtil {
      * @param disConnectCars 最新的僵尸队列
      */
     public void setDisConnectCars(Set<Integer> disConnectCars) {
+        waitWrite("disConnectCars");
         String key = groupId + "_disConnectCars";
-        waitWrite(key);
         _jedis.del(key); //删除set中的已有内容
         // 将每个元素添加到Redis集合中
         for (Integer carId : disConnectCars) {
             _jedis.sadd(key, carId.toString());
         }
-        signalWrite(key);
+        signalWrite("disConnectCars");
     }
 
     /**
@@ -277,10 +273,9 @@ public class RedisUtil {
      * @param carId 小车Id
      */
     public void addDisConnectCar(int carId) {
-        String key = groupId + "_disConnectCars";
-        waitWrite(key);
-        _jedis.sadd(key, String.valueOf(carId));
-        signalWrite(key);
+        waitWrite("disConnectCars");
+        _jedis.sadd(groupId + "_disConnectCars", String.valueOf(carId));
+        signalWrite("disConnectCars");
     }
 
     /**
@@ -309,7 +304,7 @@ public class RedisUtil {
      * @param key 对应键
      */
     public void waitWrite(String key) {
-        String writeLockName = key + "_writeLock";
+        String writeLockName = groupId + "_" + key + "_writeLock";
         if (_jedis.exists(writeLockName)) {
             while (Objects.equals(_jedis.get(writeLockName), "0")) {
                 try {
@@ -328,7 +323,7 @@ public class RedisUtil {
      * @param key 对应键
      */
     public void waitRead(String key) {
-        String readLockName = key + "_readLock";
+        String readLockName = groupId + "_" + key + "_readLock";
         if (_jedis.scard(readLockName) == 0) waitWrite(key);  //没有人在读，就需要获取写锁
         _jedis.sadd(readLockName, uuid.toString());
     }
@@ -339,7 +334,7 @@ public class RedisUtil {
      * @param key 对应键
      */
     public void signalWrite(String key) {
-        _jedis.set(key + "_writeLock", "1");
+        _jedis.set(groupId + "_" + key + "_writeLock", "1");
     }
 
     /**
@@ -348,13 +343,8 @@ public class RedisUtil {
      * @param key 对应键
      */
     public void signalRead(String key) {
-        String readLockName = key + "_readLock";
+        String readLockName = groupId + "_" + key + "_readLock";
         _jedis.srem(readLockName, uuid.toString());
         if (_jedis.scard(readLockName) == 0) signalWrite(key);
-    }
-
-
-    public static String getGroupId() {
-        return groupId;
     }
 }

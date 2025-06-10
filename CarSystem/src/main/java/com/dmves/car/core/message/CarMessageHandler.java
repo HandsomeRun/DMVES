@@ -59,7 +59,6 @@ public class CarMessageHandler {
         String navQueueKey = carComponent.getCarId() + "_NavigatorQueue";
         String targetQueueKey = carComponent.getCarId() + "_TargetQueue";
         String generalQueueKey = carComponent.getCarId() + "_MessageQueue";
-
         while (isRunning) {
             try {
                 // 检查移动消息

@@ -117,9 +117,9 @@ public class PlayBackSystem {
         String mapExplore = runLog.getMapExplore();
         List<Car> cars = runLog.getCars();
 
-        redisUtil.waitWrite(RedisUtil.getGroupId() + "_mapExplore");
+        redisUtil.waitWrite("mapExplore");
         redisUtil.setString("mapExplore", mapExplore);
-        redisUtil.signalWrite(RedisUtil.getGroupId() + "_mapExplore");
+        redisUtil.signalWrite("mapExplore");
         for (Car carTemp : cars) {
             redisUtil.setCar(carTemp);
         }

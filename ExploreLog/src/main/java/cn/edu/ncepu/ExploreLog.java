@@ -90,9 +90,9 @@ public class ExploreLog {
                             }
 
                             // 加读锁访问探索地图
-                            redisUtil.waitRead(RedisUtil.getGroupId() + "_mapExplore");
+                            redisUtil.waitRead("mapExplore");
                             String mapExplore = redisUtil.getString("mapExplore");
-                            redisUtil.signalRead(RedisUtil.getGroupId() + "_mapExplore");
+                            redisUtil.signalRead("mapExplore");
 
                             RunLog runLog = new RunLog(durationTime
                                     , mapExplore
