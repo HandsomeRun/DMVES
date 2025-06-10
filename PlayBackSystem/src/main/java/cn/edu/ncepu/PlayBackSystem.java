@@ -1,5 +1,6 @@
 package cn.edu.ncepu;
 
+import cn.edu.ncepu.Model.Car;
 import cn.edu.ncepu.Model.RunLog;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;

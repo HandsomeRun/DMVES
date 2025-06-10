@@ -1,4 +1,4 @@
-package cn.edu.ncepu;
+package cn.edu.ncepu.Model;
 
 public enum CarAlgorithmEnum {
     ASTART,

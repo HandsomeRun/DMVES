@@ -107,7 +107,7 @@ public class CollisionDetector {
                 }
 
                 // 首先尝试通过RedisUtil直接获取小车对象
-                cn.edu.ncepu.Car redisCar = redisUtil.getCar(i);
+                cn.edu.ncepu.Model.Car redisCar = redisUtil.getCar(i);
                 if (redisCar != null && redisCar.getCarPosition() != null) {
                     java.awt.Point position = redisCar.getCarPosition();
                     if (position.x == x && position.y == y) {

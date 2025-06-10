@@ -1,6 +1,8 @@
 package cn.edu.ncepu;
 
-import com.rabbitmq.impl.Sender;
+import cn.edu.ncepu.Model.Car;
+import cn.edu.ncepu.Model.CarAlgorithmEnum;
+import cn.edu.ncepu.Model.CarStatusEnum;
 
 import java.awt.*;
 import java.util.UUID;
@@ -60,7 +62,7 @@ public class Test {
 
             redisUtil.setIsWork("运行中");
 
-            Thread.sleep(10000);
+            Thread.sleep(100000);
 
             redisUtil.setIsWork("已完成");
 

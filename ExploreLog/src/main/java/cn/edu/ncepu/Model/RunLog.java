@@ -1,6 +1,5 @@
 package cn.edu.ncepu.Model;
 
-import cn.edu.ncepu.Car;
 import com.google.gson.Gson;
 
 import java.util.List;

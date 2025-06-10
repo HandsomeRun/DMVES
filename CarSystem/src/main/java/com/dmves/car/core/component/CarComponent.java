@@ -8,7 +8,6 @@ import com.dmves.car.core.movement.PathExecutor;
 import com.dmves.car.core.movement.CollisionDetector;
 import com.dmves.car.core.state.CarStateManager;
 import cn.edu.ncepu.RedisUtil;
-import cn.edu.ncepu.CarAlgorithmEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -104,7 +103,7 @@ public class CarComponent implements IComponent {
         try {
             // 使用RedisUtil获取小车数据
             // 注意：RedisUtil的Car类与当前项目的Car类不同，需要进行转换
-            cn.edu.ncepu.Car redisCar = redisUtil.getCar(Integer.parseInt(carId));
+            cn.edu.ncepu.Model.Car redisCar = redisUtil.getCar(Integer.parseInt(carId));
 
             if (redisCar == null) {
                 return null;
@@ -144,7 +143,7 @@ public class CarComponent implements IComponent {
     /**
      * 转换RedisUtil的CarStatusEnum为当前项目的CarStatusEnum
      */
-    private CarStatusEnum convertCarStatus(cn.edu.ncepu.CarStatusEnum redisStatus) {
+    private CarStatusEnum convertCarStatus(cn.edu.ncepu.Model.CarStatusEnum redisStatus) {
         if (redisStatus == null) {
             return CarStatusEnum.FREE;
         }
@@ -172,28 +171,28 @@ public class CarComponent implements IComponent {
     /**
      * 转换当前项目的CarStatusEnum为RedisUtil的CarStatusEnum
      */
-    private cn.edu.ncepu.CarStatusEnum convertToRedisCarStatus(CarStatusEnum status) {
+    private cn.edu.ncepu.Model.CarStatusEnum convertToRedisCarStatus(CarStatusEnum status) {
         if (status == null) {
-            return cn.edu.ncepu.CarStatusEnum.FREE;
+            return cn.edu.ncepu.Model.CarStatusEnum.FREE;
         }
 
         switch (status) {
             case FREE:
-                return cn.edu.ncepu.CarStatusEnum.FREE;
+                return cn.edu.ncepu.Model.CarStatusEnum.FREE;
             case RUNNING:
-                return cn.edu.ncepu.CarStatusEnum.RUNNING;
+                return cn.edu.ncepu.Model.CarStatusEnum.RUNNING;
             case SEARCHING:
-                return cn.edu.ncepu.CarStatusEnum.SEARCHING;
+                return cn.edu.ncepu.Model.CarStatusEnum.SEARCHING;
             case WAIT_NAV:
-                return cn.edu.ncepu.CarStatusEnum.WAIT_NAV;
+                return cn.edu.ncepu.Model.CarStatusEnum.WAIT_NAV;
             case NAVIGATING:
-                return cn.edu.ncepu.CarStatusEnum.NAVIGATING;
+                return cn.edu.ncepu.Model.CarStatusEnum.NAVIGATING;
             case WAITING:
-                return cn.edu.ncepu.CarStatusEnum.WAITING;
+                return cn.edu.ncepu.Model.CarStatusEnum.WAITING;
             case DISCONNECTING:
-                return cn.edu.ncepu.CarStatusEnum.DISCONNECTING;
+                return cn.edu.ncepu.Model.CarStatusEnum.DISCONNECTING;
             default:
-                return cn.edu.ncepu.CarStatusEnum.FREE;
+                return cn.edu.ncepu.Model.CarStatusEnum.FREE;
         }
     }
 
@@ -389,7 +388,7 @@ public class CarComponent implements IComponent {
                         car.getCarTarget().getY());
             }
 
-            cn.edu.ncepu.Car redisCar = new cn.edu.ncepu.Car(
+            cn.edu.ncepu.Model.Car redisCar = new cn.edu.ncepu.Model.Car(
                     Integer.parseInt(carId),
                     convertToRedisCarStatus(car.getCarStatus()),
                     position,

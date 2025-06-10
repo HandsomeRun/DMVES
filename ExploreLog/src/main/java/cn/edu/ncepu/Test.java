@@ -1,5 +1,8 @@
 package cn.edu.ncepu;
 
+import cn.edu.ncepu.Model.Car;
+import cn.edu.ncepu.Model.CarAlgorithmEnum;
+import cn.edu.ncepu.Model.CarStatusEnum;
 import cn.edu.ncepu.Model.ExploreMessage;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;

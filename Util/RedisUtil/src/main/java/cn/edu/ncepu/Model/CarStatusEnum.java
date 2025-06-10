@@ -1,4 +1,4 @@
-package cn.edu.ncepu;
+package cn.edu.ncepu.Model;
 
 public enum CarStatusEnum {
     DISCONNECTING,
@@ -7,5 +7,6 @@ public enum CarStatusEnum {
     SEARCHING,
     WAIT_NAV,
     NAVIGATING,
-    WAITING
+    WAITING,
+    OK
 }

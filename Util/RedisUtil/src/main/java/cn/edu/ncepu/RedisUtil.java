@@ -1,5 +1,6 @@
 package cn.edu.ncepu;
 
+import cn.edu.ncepu.Model.Car;
 import com.google.gson.Gson;
 import redis.clients.jedis.Jedis;
 
