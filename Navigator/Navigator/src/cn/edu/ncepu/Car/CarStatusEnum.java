@@ -7,5 +7,6 @@ public enum CarStatusEnum {
     SEARCHING,
     WAIT_NAV,
     NAVIGATING,
-    WAITING
+    WAITING ,
+    OK
 }
