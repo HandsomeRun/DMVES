@@ -75,37 +75,31 @@ public class Controller {
 
                     // 遍历小车
                     int carNumber = redisUtil.getIntByLock("carNum");
+                    int okCarCount = 0;// 用于计算遍历完连通块的小车数量
                     for (int i = 0; i < carNumber; i++) {
                         Car car = redisUtil.getCar(i + 1);
+                        System.out.println("CarId : " + car.getCarPath() + "  |  CarStatus : " + car.getCarStatus());
                         CarStatusEnum carStatus = car.getCarStatus();
 //                        int carStatusCnt = car.getCarStatusCnt();
 
                         // 断联状态
                         if (CarStatusEnum.DISCONNECTING == carStatus) continue;
 
-                        // 超出小车容忍时间，认为小车进程断联
-                        if (nowTime - car.getCarLastRunTime() > CAR_TOLERANCE_TIME) {
-                            // 更改小车状态，并将小车放入僵尸队列
-                            car.setCarStatus(CarStatusEnum.DISCONNECTING);
-                            redisUtil.setCar(car);
-                            redisUtil.addDisConnectCar(car.getCarId());
-
-                            System.out.println("Find DisConnect carId : " + car.getCarId());
-
-                            continue;
-                        }
-
-//                        // 检查自身周期，周期为零时，可能需要进行状态回退
-//                        carStatusCnt--;
-//                        if (carStatusCnt < 1) {
-//                            switch (car.getCarStatus()) {
-//                                case SEARCHING -> car.setCarStatus(CarStatusEnum.FREE);
-//                                case NAVIGATING, WAITING -> car.setCarStatus(CarStatusEnum.WAIT_NAV);
-//                            }
+//                        // 超出小车容忍时间，认为小车进程断联
+//                        if (nowTime - car.getCarLastRunTime() > CAR_TOLERANCE_TIME) {
+//                            // 更改小车状态，并将小车放入僵尸队列
+//                            car.setCarStatus(CarStatusEnum.DISCONNECTING);
+//                            redisUtil.setCar(car);
+//                            redisUtil.addDisConnectCar(car.getCarId());
+//
+//                            System.out.println("Find DisConnect carId : " + car.getCarId());
+//
+//                            continue;
 //                        }
 
+
                         // 分发任务，设置小车状态
-                        switch (car.getCarStatus()) {
+                        switch (carStatus) {
                             case FREE -> {
                                 car.setCarStatusCnt(3);
                                 car.setCarStatus(CarStatusEnum.SEARCHING);
@@ -128,6 +122,10 @@ public class Controller {
 
                                 System.out.println("Request Nav carId : " + car.getCarId());
                             }
+                            case OK -> {
+                                okCarCount++;
+                                System.out.println("Car OK carId : " + car.getCarId());
+                            }
 //                            case SEARCHING, NAVIGATING, WAITING -> {
 //                                car.setCarStatusCnt(carStatusCnt);
 //                                redisUtil.setCar(car);
@@ -138,30 +136,27 @@ public class Controller {
                     // 给view发MQ，更新上一帧的画面
                     sender.DMVESSenderMessage(Sender.ControlName, Sender.ViewName, "update");
 
-                    // 给探索日志子系统发MQ，记录一帧
-                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
-                            , new ExploreMessage("Run", String.valueOf(durationTime)).toJson());
+                    // 所有小车都已完成
+                    if (okCarCount == carNumber) {
+                        // 给探索日志子系统发MQ，记录最后一帧，同时记录配置
+                        sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
+                                , new ExploreMessage("End", String.valueOf(durationTime)).toJson());
 
-                    // 给小车进程MQ，更新小车状态
-                    sender.DMVESSenderMessage(Sender.ControlName, Sender.CarName, "run");
+                        startTime = -1;
 
-                    sleepTime = 200;
-                }
-                case "已完成" -> {
-                    durationTime += nowTime - startTime;
-                    startTime = -1;
+                        // 将redis中的isWork置为“未运行”，防止重复发消息
+                        redisUtil.setIsWork("已完成");
 
-                    // 给View发MQ，更新最后一帧
-                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ViewName, "update");
+                        System.out.println("Exp End!");
 
-                    // 给探索日志子系统发MQ，记录最后一帧，同时记录配置
-                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
-                            , new ExploreMessage("End", String.valueOf(durationTime)).toJson());
+                    } else {
+                        // 给探索日志子系统发MQ，记录一帧
+                        sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
+                                , new ExploreMessage("Run", String.valueOf(durationTime)).toJson());
 
-                    // 将redis中的isWork置为“未运行”，防止重复发消息
-                    redisUtil.setIsWork("未运行");
-
-                    System.out.println("Exp End!");
+                        // 给小车进程MQ，更新小车状态
+                        sender.DMVESSenderMessage(Sender.ControlName, Sender.CarName, "run");
+                    }
 
                     sleepTime = 200;
                 }

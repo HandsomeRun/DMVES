@@ -48,9 +48,12 @@ public class Test {
 
             redisUtil.setMap("mapExplore", map);
 
-            redisUtil.setInt("carNum", 1);
-            redisUtil.setCar(new Car(1, CarStatusEnum.FREE, new Point(0, 0), null
-                    , null, CarAlgorithmEnum.BFS, 3, "rgb(255,0,255)"
+            redisUtil.setInt("carNum", 2);
+            redisUtil.setCar(new Car(1, CarStatusEnum.FREE, new Point(2, 2), null
+                    , "UUUR", CarAlgorithmEnum.BFS, 3, "#FF00F0"
+                    , System.currentTimeMillis()));
+            redisUtil.setCar(new Car(2, CarStatusEnum.FREE, new Point(3, 3), null
+                    , "UURR", CarAlgorithmEnum.BFS, 3, "#FF0000"
                     , System.currentTimeMillis()));
 
 //            Sender sender = new Sender();
@@ -62,9 +65,30 @@ public class Test {
 
             redisUtil.setIsWork("运行中");
 
-            Thread.sleep(100000);
+            Thread.sleep(3000);
 
-            redisUtil.setIsWork("已完成");
+            redisUtil.setCar(new Car(1, CarStatusEnum.FREE, new Point(2, 3), null
+                    , "DULU", CarAlgorithmEnum.BFS, 3, "#FF00FF"
+                    , System.currentTimeMillis()));
+
+            Thread.sleep(3000);
+
+            redisUtil.setCar(new Car(1, CarStatusEnum.FREE, new Point(2, 3), null
+                    , "ULLU", CarAlgorithmEnum.BFS, 3, "#F000FF"
+                    , System.currentTimeMillis()));
+
+            Thread.sleep(3000);
+
+            redisUtil.setCar(new Car(1, CarStatusEnum.OK, new Point(2, 3), null
+                    , "RRUU", CarAlgorithmEnum.BFS, 3, "#0000FF"
+                    , System.currentTimeMillis()));
+
+            redisUtil.setCar(new Car(2, CarStatusEnum.OK, new Point(3, 3), null
+                    , "UURR", CarAlgorithmEnum.BFS, 3, "#FF0000"
+                    , System.currentTimeMillis()));
+
+            System.out.println("已完成Test");
+            //redisUtil.setIsWork("已完成");
 
         } catch (Exception e) {
             System.out.println(e.getMessage());

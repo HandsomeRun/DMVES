@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.util.*;
 
 public class RedisUtil {
-    public static RedisUtil redisUtil = new RedisUtil();
+    private static final RedisUtil redisUtil = new RedisUtil();
     private static Jedis _jedis;
     private static String groupId;
     /*
