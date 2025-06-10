@@ -19,7 +19,7 @@ public class Sender implements ISender {
     public final static String NavigatorName = "Navigator" ;
     public final static String CarName = "Car" ;
     public final static String ViewName = "View";
-    public final static String exporeLogName = "ExploreLog";
+    public final static String ExploreLogName = "ExploreLog";
 
     public final static String targetExchange       = "1.target.exchange";
     public final static String targetQueue          = "1.target.queue";
@@ -111,7 +111,7 @@ public class Sender implements ISender {
                 // Controller 发View更新消息（广播）
                 sendBroadcastMessage(viewExchange, message);
                 break;
-            case exporeLogName:
+            case ExploreLogName:
                 // Controller 或 Navigator 发 ExploreLog 记录消息（广播）
                 sendBroadcastMessage(exploreLogExchange, message);
                 break;
