@@ -30,10 +30,12 @@ public class Main {
             if(op == 1) {
                 System.out.println("发送广播消息...");
                 sender.sendBroadcastMessage("broadcast.exchange" , "这是一条广播消息" + cnt);
+                sender.DMVESSenderMessage(Sender.ControlName,Sender.ViewName , "fanout");
             }
             else if(op == 2){
                 System.out.println("发送公平分发消息...");
                 sender.sendFairMessage("fair.exchange" ,"fair.routing.key" ,"这是一条公平分发消息" + cnt);
+                sender.DMVESSenderMessage(Sender.ControlName,Sender.TargetName , "fair");
             }
             else {
                 break ;

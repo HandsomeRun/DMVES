@@ -49,6 +49,14 @@ public interface IReceiver {
     void receiveFairMessage(String exchangeName, String queueName, MessageHandler handler);
 
     /**
+     * 接收 DMVES 业务消息
+     * @param scrName 发送方名称
+     * @param destName 接收方名称
+     * @param handler 消息处理器
+     */
+    void DMVESReceiverMessage(String scrName, String destName, MessageHandler handler);
+
+    /**
      * 关闭连接
      */
     void close() throws TimeoutException, IOException;
