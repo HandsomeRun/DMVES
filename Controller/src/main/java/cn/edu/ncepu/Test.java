@@ -1,47 +1,15 @@
 package cn.edu.ncepu;
 
+import com.rabbitmq.impl.Sender;
+
+import java.awt.*;
 import java.util.UUID;
 
-//RedisUtil使用示例
-public class Main {
+public class Test {
+    private static UUID uuid = UUID.randomUUID();
+
     public static void main(String[] args) {
-        UUID uuid = UUID.randomUUID();
-        testReadLock(uuid);
-//        example(uuid);  //使用示例代码见下
-//        testLock(uuid);
-    }
-
-    private static void testReadLock(UUID uuid) {
         RedisUtil redisUtil = RedisUtil.getInstance();
-        try {
-            redisUtil.getJedis(uuid);
-
-            redisUtil.waitRead("1_car1");
-            System.out.println(redisUtil.getString("car1_writeLock"));
-            redisUtil.signalRead("1_car1");
-            System.out.println(redisUtil.getString("car1_writeLock"));
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    private static void testLock(UUID uuid) {
-        RedisUtil redisUtil = RedisUtil.getInstance();
-        try {
-            redisUtil.getJedis(uuid);
-            redisUtil.setInt("carNumber_writeLock", 1);
-            redisUtil.setIntByLock("carNumber", 20);
-            System.out.println(redisUtil.getIntByLock("carNumber"));
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    private static void example(UUID uuid) {
-        //1.new对象（单例类）
-        RedisUtil redisUtil = RedisUtil.getInstance();
-
         try {
             //2.连接Redis
             redisUtil.getJedis(uuid);
@@ -68,18 +36,33 @@ public class Main {
             };
             redisUtil.setMap("mapBarrier", map);
 
-            //4.读Redis
-            int[][] temp = redisUtil.getMap("mapBarrier", 15, 15);
-
-            //5.关闭Redis连接
-            redisUtil.close();
+            map = new int[15][15];
 
             for (int i = 0; i < 15; i++) {
                 for (int j = 0; j < 15; j++) {
-                    System.out.print(temp[i][j] + " ");
+                    map[i][j] = 0;
                 }
-                System.out.println();
             }
+
+            redisUtil.setMap("mapExplore", map);
+
+            redisUtil.setInt("carNum", 1);
+            redisUtil.setCar(new Car(1, CarStatusEnum.FREE, new Point(0, 0), null
+                    , null, CarAlgorithmEnum.BFS, 3, "rgb(255,0,255)"
+                    , System.currentTimeMillis()));
+
+//            Sender sender = new Sender();
+//            sender.initExchange("1.view.exchange" , Sender.MQ_FANOUT);
+//            for(int i = 0 ; i < 10 ; i ++ ) {
+//                sender.sendBroadcastMessage("1.view.exchange" , "update");
+//                Thread.sleep(1000);
+//            }
+
+            redisUtil.setIsWork("运行中");
+
+            Thread.sleep(10000);
+
+            redisUtil.setIsWork("已完成");
 
         } catch (Exception e) {
             System.out.println(e.getMessage());

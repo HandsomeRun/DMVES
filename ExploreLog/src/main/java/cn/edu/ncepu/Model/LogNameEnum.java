@@ -2,7 +2,7 @@ package cn.edu.ncepu.Model;
 
 public enum LogNameEnum {
     INFORMATION("information"),
-    RUN_LOG("runLog."),
+    RUN_LOG("runLog"),
     ANALYSIS_LOG("analysisLog");
 
     private final String description;

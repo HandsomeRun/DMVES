@@ -1,10 +1,8 @@
 package cn.edu.ncepu;
 
-import cn.edu.ncepu.Model.ExploreMessage;
-import cn.edu.ncepu.Model.InformationLog;
-import cn.edu.ncepu.Model.LogNameEnum;
-import cn.edu.ncepu.Model.RunLog;
+import cn.edu.ncepu.Model.*;
 import com.rabbitmq.impl.Receiver;
+import com.rabbitmq.interfaces.IReceiver;
 import com.rabbitmq.interfaces.MessageHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
@@ -15,6 +13,9 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,39 +35,35 @@ public class ExploreLog {
             throw new RuntimeException(e);
         }
 
-        Receiver receiver = new Receiver();
-        final Logger[] loggerInformation = {null};
-        final Logger[] loggerRunLog = {null};
-        final Logger[] loggerAnalysisLog = {null};
-        final String[] filePath = new String[1];
-        final InformationLog[] informationLog = {null};
-
-        String exchange = "exchange.ExploreLog";
-        String queueName = "explore.queue";
+        IReceiver receiver = new Receiver();
 
         // 初始化
-        receiver.initExchange(exchange, Receiver.MQ_DIRECT);
-        receiver.initQueue(queueName);
-        receiver.bindQueueToExchange(queueName, exchange, "exploreLog.fair.routing.key");
-        receiver.receiveFairMessage(exchange, queueName, new MessageHandler() {
+        receiver.initExchange(EXPLORE_EXCHANGE, Receiver.MQ_FANOUT);
+        receiver.receiveBroadcastMessage(EXPLORE_EXCHANGE, new MessageHandler() {
             @Override
             public void handleMessage(String message) {
-
+                System.out.println("Get message: " + message);
                 ExploreMessage exploreMessage = ExploreMessage.getExploreMessage(message);
                 switch (exploreMessage.getMsgType()) {
                     case "Start" -> {
                         long startTime = Long.parseLong(exploreMessage.getMsgContent());
                         String formattedDate = new SimpleDateFormat("yyyy-MM-dd-HH_mm_ss")
                                 .format(new Date(startTime));
-                        filePath[0] = "logs/" + formattedDate + "/";
+                        filePath = "logs/" + formattedDate + "/";
+
+                        System.out.print(exploreMessage.getMsgType());
+                        System.out.println(filePath);
 
                         // 初始化append和logger
-                        loggerInformation[0] = addLogFileAndBindLogger(filePath[0] + "information.log"
+                        loggerInformation = addLogFileAndBindLogger(filePath + "information.log"
                                 , LogNameEnum.INFORMATION);
-                        loggerRunLog[0] = addLogFileAndBindLogger(filePath[0] + "runLog.log"
+                        loggerRunLog = addLogFileAndBindLogger(filePath + "runLog.log"
                                 , LogNameEnum.RUN_LOG);
-                        loggerAnalysisLog[0] = addLogFileAndBindLogger(filePath[0] + "analysisLog.log"
+                        loggerAnalysisLog = addLogFileAndBindLogger(filePath + "analysisLog.log"
                                 , LogNameEnum.ANALYSIS_LOG);
+
+                        System.out.println("222");
+                        loggerRunLog.info("111");
 
                         // 记录配置信息
                         int carNum = redisUtil.getIntByLock("carNum");
@@ -76,7 +73,7 @@ public class ExploreLog {
                         }
                         int mapHeight = redisUtil.getInt("mapHeight");
                         int mapWidth = redisUtil.getInt("mapWidth");
-                        informationLog[0] = new InformationLog(0
+                        informationLog = new InformationLog(0
                                 , mapHeight
                                 , mapWidth
                                 , redisUtil.getMap("mapBarrier", mapHeight, mapWidth)
@@ -84,7 +81,7 @@ public class ExploreLog {
                     }
                     case "Run" -> {
                         long durationTime = Long.parseLong(exploreMessage.getMsgContent());
-                        if (null != loggerRunLog[0]) {
+                        if (null != loggerRunLog) {
                             // 获取Redis中所有小车
                             int carNumber = redisUtil.getIntByLock("carNum");
                             List<Car> cars = new ArrayList<>();
@@ -93,29 +90,30 @@ public class ExploreLog {
                             }
 
                             // 加读锁访问探索地图
-                            redisUtil.waitRead(RedisUtil.getGroupId() + "_mapExplore_readLock");
+                            redisUtil.waitRead(RedisUtil.getGroupId() + "_mapExplore");
                             String mapExplore = redisUtil.getString("mapExplore");
-                            redisUtil.signalRead(RedisUtil.getGroupId() + "_mapExplore_readLock");
+                            redisUtil.signalRead(RedisUtil.getGroupId() + "_mapExplore");
 
                             RunLog runLog = new RunLog(durationTime
                                     , mapExplore
                                     , cars);
 
                             // 记录序列化后的帧信息
-                            loggerRunLog[0].info(runLog.toJson());
+                            loggerRunLog.info(runLog.toJson());
                         }
-
-
                     }
                     case "End" -> {
                         // 完善配置信息
                         long durationTime = Long.parseLong(exploreMessage.getMsgContent());
-                        informationLog[0].setExpDuration(durationTime);
+                        informationLog.setExpDuration(durationTime);
 
                         // 记录序列化后的配置信息
-                        loggerInformation[0].info(informationLog[0].toJson());
+                        loggerInformation.info(informationLog.toJson());
+
+                        //将分析日志传到前端
+                        List<AnalysisLog> analysisLogs = readAnalysisLog(filePath + "analysisLog.log");
                     }
-                    case "Analysis" -> loggerAnalysisLog[0].info(exploreMessage.getMsgContent());
+                    case "Analysis" -> loggerAnalysisLog.info(exploreMessage.getMsgContent());
                 }
             }
         });
@@ -163,6 +161,35 @@ public class ExploreLog {
         // 更新 Loggers
         ctx.updateLoggers();
 
-        return LoggerFactory.getLogger(loggerName.getDescription());
+        return LoggerFactory.getLogger(loggerName.getDescription() + ".logger");
     }
+
+    /**
+     * 读取指定路径下的AnalysisLog
+     *
+     * @param filePath 文件路径
+     * @return 反序列化后的logs
+     */
+    private static List<AnalysisLog> readAnalysisLog(String filePath) {
+        List<AnalysisLog> logs = new ArrayList<>();
+
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                logs.add(AnalysisLog.getAnalysisLog(line));
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        return logs;
+    }
+
+    private final static String EXPLORE_EXCHANGE = "1.exploreLog.exchange";
+
+    private static Logger loggerInformation;
+    private static Logger loggerRunLog;
+    private static Logger loggerAnalysisLog;
+    private static String filePath;
+    private static InformationLog informationLog;
 }
