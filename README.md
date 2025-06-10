@@ -175,7 +175,7 @@ UserRoleEnum : {
 	carStatus : CarStatusEnum , 
 	carPosition : Point ,
 	carTarget : Point , // 小车目标 
-	carPath : String , // U D L R
+	carPath : String , // U D L R , 这是逆序的，每次消费最后一个
 	carAlgorithm : CarAlgorithmEnum ,
 	carStatusCnt : int , // 小车状态保持剩余周期数，减为 0 时，回退到上一状态，在小车进程中检测 
 	carColor : String | Color ,
@@ -194,7 +194,8 @@ CarStatusEnum : {
 	SEARCHING ,	 // 寻找目标中
 	WAIT_NAV , // 待导航
 	NAVIGATING , // 导航中
-	WAITING     // 遇到小车等待中
+	WAITING,     // 遇到小车等待中
+	OK			 // 小车探索完成，当小车所在连通块探索完成之后，目标器会将小车状态转化为 OK ，控制器发现有 carNum 个小车处于 OK 状态时，代表实验结束，isWork = 已完成。
 }
 ```
 
@@ -213,7 +214,7 @@ CarStatusEnum : {
 
 **构件存活了就周期发（100ms/send)**
 
-每一种构建在 Redis 当中存在一个键值对 `<Name , TimeStemp>` 来标识存活时间，以下为举例。
+每一种构建在 Redis 当中存在一个键值对 `<Name , TimeStamp>` 来标识存活时间，以下为举例。
 
 ```javascript
 {
@@ -230,7 +231,7 @@ CarStatusEnum : {
 
 1. 实验开始 前台 向 Redis 发 `isWork = 运行中`
 
-2. 实验结束 目标起 向 Redis 发 `isWork = 已完成`
+2. 实验结束 Controller 向 Redis 发 `isWork = 已完成`
 
 3. 实验过程中 Controller 向 Redis 发 `isWork = 故障` , 且此时 前台 从 Redis 中的 `errorData` 读取故障原因。
 
