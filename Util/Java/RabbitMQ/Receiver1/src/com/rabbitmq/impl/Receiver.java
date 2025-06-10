@@ -14,6 +14,23 @@ public class Receiver implements IReceiver {
     public final static String MQ_FANOUT = "fanout" ;
     public final static String MQ_DIRECT = "direct" ;
 
+    public final static String ControlName = "Controller" ;
+    public final static String TargetName = "Target" ;
+    public final static String NavigatorName = "Navigator" ;
+    public final static String CarName = "Car" ;
+    public final static String ViewName = "View";
+
+    public final static String targetExchange       = "1.target.exchange";
+    public final static String targetQueue          = "1.target.queue";
+    public final static String targetRoutingKey     = "1.target.routing.key";
+    public final static String navigatorExchange    = "1.navigator.exchange";
+    public final static String navigatorQueue       = "1.navigator.queue";
+    public final static String navigatorRoutingKey  = "1.navigator.routing.key";
+    public final static String carExchange          = "1.car.exchange";
+    public final static String viewExchange         = "1.view.exchange";
+    public final static String exploreLogExchange   = "1.exploreLog.exchange";
+
+
     private Connection connection;
     private Channel channel;
     private final RabbitMQConfig config;
@@ -36,6 +53,17 @@ public class Receiver implements IReceiver {
 
             connection = factory.newConnection();
             channel = connection.createChannel();
+
+            // 使用 initExchange/initQueue/bindQueueToExchange 初始化
+            initExchange(carExchange, MQ_FANOUT);
+            initExchange(viewExchange, MQ_FANOUT);
+            initExchange(exploreLogExchange, MQ_FANOUT);
+            initExchange(targetExchange, MQ_DIRECT);
+            initExchange(navigatorExchange, MQ_DIRECT);
+            initQueue(targetQueue);
+            bindQueueToExchange(targetQueue, targetExchange, targetRoutingKey);
+            initQueue(navigatorQueue);
+            bindQueueToExchange(navigatorQueue, navigatorExchange, navigatorRoutingKey);
         } catch (IOException | TimeoutException e) {
             throw new RuntimeException("Failed to initialize RabbitMQ connection", e);
         }
@@ -119,6 +147,33 @@ public class Receiver implements IReceiver {
             }
         } catch (IOException | TimeoutException e) {
             throw new RuntimeException("Failed to close RabbitMQ connection", e);
+        }
+    }
+
+    public void DMVESReceiverMessage(String scrName, String destName, MessageHandler handler) {
+        switch (destName) {
+            case TargetName:
+                // Controller 发请求终点消息，监听 targetQueue
+                receiveFairMessage(targetExchange, targetQueue, handler);
+                break;
+            case NavigatorName:
+                // Controller 发请求导航消息，监听 navigatorQueue
+                receiveFairMessage(navigatorExchange, navigatorQueue, handler);
+                break;
+            case CarName:
+                // Controller 发小车移动消息（广播）
+                receiveBroadcastMessage(carExchange, handler);
+                break;
+            case ViewName:
+                // Controller 发View更新消息（广播）
+                receiveBroadcastMessage(viewExchange, handler);
+                break;
+            case "ExploreLog":
+                // Controller 或 Navigator 发 ExploreLog 记录消息（广播）
+                receiveBroadcastMessage(exploreLogExchange, handler);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown destName: " + destName);
         }
     }
 } 
