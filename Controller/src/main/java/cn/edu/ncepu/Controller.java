@@ -22,11 +22,6 @@ public class Controller {
 
         // 初始化MQ
         ISender sender = new Sender();
-        sender.initExchange(EXPLORE_EXCHANGE, Sender.MQ_FANOUT);
-        sender.initExchange(VIEW_EXCHANGE, Sender.MQ_FANOUT);
-        sender.initExchange(NAVIGATOR_EXCHANGE, Sender.MQ_DIRECT);
-        sender.initExchange(TARGET_EXCHANGE, Sender.MQ_DIRECT);
-        sender.initExchange(CAR_EXCHANGE, Sender.MQ_FANOUT);
 
         /*
         用于记录开始时间
@@ -51,7 +46,7 @@ public class Controller {
 //
 //                            // 如果不是新开始实验，给探索日志子系统发MQ，记录最后一帧，同时记录配置
 //                            if (startTime != -1) {
-//                                sender.sendBroadcastMessage(EXPLORE_EXCHANGE
+//                                sender.DMVESSenderMessage(Sender.ControlName,Sender.TargetName
 //                                        , new ExploreMessage("End", String.valueOf(durationTime)).toJson());
 //                            }
 //
@@ -68,7 +63,7 @@ public class Controller {
 
                         System.out.println("A new Exp, Time:" + startTime);
                         // 发MQ给日志系统
-                        sender.sendBroadcastMessage(EXPLORE_EXCHANGE
+                        sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
                                 , new ExploreMessage("Start", String.valueOf(startTime)).toJson());
                     }
 
@@ -114,8 +109,8 @@ public class Controller {
                                 car.setCarStatus(CarStatusEnum.SEARCHING);
                                 redisUtil.setCar(car);
 
-                                sender.sendFairMessage(TARGET_EXCHANGE
-                                        , TARGET_KEY
+                                sender.DMVESSenderMessage(Sender.ControlName
+                                        , Sender.TargetName
                                         , String.valueOf(car.getCarId()));
 
                                 System.out.println("Request Target carId : " + car.getCarId());
@@ -125,8 +120,8 @@ public class Controller {
                                 car.setCarStatus(CarStatusEnum.NAVIGATING);
                                 redisUtil.setCar(car);
 
-                                sender.sendFairMessage(NAVIGATOR_EXCHANGE
-                                        , NAVIGATOR_KEY
+                                sender.DMVESSenderMessage(Sender.ControlName
+                                        , Sender.NavigatorName
                                         , String.valueOf(car.getCarId()));
 
                                 System.out.println("Request Nav carId : " + car.getCarId());
@@ -139,14 +134,14 @@ public class Controller {
                     }
 
                     // 给view发MQ，更新上一帧的画面
-                    sender.sendBroadcastMessage(VIEW_EXCHANGE, "update");
+                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ViewName, "update");
 
                     // 给探索日志子系统发MQ，记录一帧
-                    sender.sendBroadcastMessage(EXPLORE_EXCHANGE
+                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
                             , new ExploreMessage("Run", String.valueOf(durationTime)).toJson());
 
                     // 给小车进程MQ，更新小车状态
-                    sender.sendBroadcastMessage(CAR_EXCHANGE, "run");
+                    sender.DMVESSenderMessage(Sender.ControlName, Sender.CarName, "run");
 
                     sleepTime = 200;
                 }
@@ -155,10 +150,10 @@ public class Controller {
                     startTime = -1;
 
                     // 给View发MQ，更新最后一帧
-                    sender.sendBroadcastMessage(VIEW_EXCHANGE, "update");
+                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ViewName, "update");
 
                     // 给探索日志子系统发MQ，记录最后一帧，同时记录配置
-                    sender.sendBroadcastMessage(EXPLORE_EXCHANGE
+                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ExploreLogName
                             , new ExploreMessage("End", String.valueOf(durationTime)).toJson());
 
                     // 将redis中的isWork置为“未运行”，防止重复发消息
@@ -194,18 +189,4 @@ public class Controller {
      * 小车进程最长容忍时间
      */
     private final static long CAR_TOLERANCE_TIME = 2000;
-
-    private final static String EXPLORE_EXCHANGE = "1.exploreLog.exchange";
-
-    private final static String VIEW_EXCHANGE = "1.view.exchange";
-
-    private final static String NAVIGATOR_EXCHANGE = "1.navigator.exchange";
-
-    private final static String TARGET_EXCHANGE = "1.target.exchange";
-
-    private final static String CAR_EXCHANGE = "1.car.exchange";
-
-    private final static String TARGET_KEY = "1.target.routing.key";
-
-    private final static String NAVIGATOR_KEY = "1.navigator.routing.key";
 }

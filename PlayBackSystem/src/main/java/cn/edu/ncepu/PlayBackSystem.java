@@ -23,7 +23,6 @@ public class PlayBackSystem {
 
         //初始化Sender
         ISender sender = new Sender();
-        sender.initExchange("exchange.View", Sender.MQ_FANOUT);
 
         String filePath = ""; /*= "E:/大学/软件体系结构/第二次作业/DMVES/logs/2025-06-08-11_31_05" + "/runLog.log";*/
         long targetTime;
@@ -46,7 +45,7 @@ public class PlayBackSystem {
                 // 如果不为空就写Redis，并且给View发消息
                 if (targetLog != null) {
                     updateRedis(redisUtil, targetLog);
-                    sender.sendBroadcastMessage("exchange.View", "update");
+                    sender.DMVESSenderMessage(Sender.ControlName,Sender.ViewName, "update");
                 }
             }
         }
