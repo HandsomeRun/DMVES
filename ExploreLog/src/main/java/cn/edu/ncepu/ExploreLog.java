@@ -3,11 +3,6 @@ package cn.edu.ncepu;
 import cn.edu.ncepu.Model.*;
 import cn.edu.ncepu.Util.CosUtil;
 import cn.edu.ncepu.Util.RedisUtil;
-import com.rabbitmq.impl.Receiver;
-import com.rabbitmq.impl.Sender;
-import com.rabbitmq.interfaces.IReceiver;
-import com.rabbitmq.interfaces.ISender;
-import com.rabbitmq.interfaces.MessageHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
@@ -16,6 +11,9 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rabbitmq.impl.Receiver;
+import rabbitmq.interfaces.IReceiver;
+import rabbitmq.interfaces.MessageHandler;
 
 import java.io.BufferedReader;
 import java.nio.file.Files;
@@ -38,7 +36,6 @@ public class ExploreLog {
         }
 
         IReceiver receiver = new Receiver();
-        ISender sender=new Sender();
 
         // 初始化
         receiver.initExchange(EXPLORE_EXCHANGE, Receiver.MQ_FANOUT);

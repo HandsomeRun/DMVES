@@ -4,8 +4,8 @@ import cn.edu.ncepu.Model.Car;
 import cn.edu.ncepu.Model.RunLog;
 import cn.edu.ncepu.Util.CosUtil;
 import cn.edu.ncepu.Util.RedisUtil;
-import com.rabbitmq.impl.Sender;
-import com.rabbitmq.interfaces.ISender;
+import rabbitmq.impl.Sender;
+import rabbitmq.interfaces.ISender;
 
 import java.io.BufferedReader;
 import java.io.File;

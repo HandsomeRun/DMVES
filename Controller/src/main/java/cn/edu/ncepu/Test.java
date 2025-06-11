@@ -5,7 +5,7 @@ import cn.edu.ncepu.Model.CarAlgorithmEnum;
 import cn.edu.ncepu.Model.CarStatusEnum;
 import cn.edu.ncepu.Util.RedisUtil;
 import com.google.gson.Gson;
-import com.rabbitmq.impl.Sender;
+import rabbitmq.impl.Sender;
 
 import java.awt.*;
 import java.util.*;
