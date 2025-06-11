@@ -1,8 +1,12 @@
 package cn.edu.ncepu;
 
 import cn.edu.ncepu.Model.*;
+import cn.edu.ncepu.Util.CosUtil;
+import cn.edu.ncepu.Util.RedisUtil;
 import com.rabbitmq.impl.Receiver;
+import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.IReceiver;
+import com.rabbitmq.interfaces.ISender;
 import com.rabbitmq.interfaces.MessageHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
@@ -16,9 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ public class ExploreLog {
         }
 
         IReceiver receiver = new Receiver();
+        ISender sender=new Sender();
 
         // 初始化
         receiver.initExchange(EXPLORE_EXCHANGE, Receiver.MQ_FANOUT);
@@ -46,10 +49,7 @@ public class ExploreLog {
                 ExploreMessage exploreMessage = ExploreMessage.getExploreMessage(message);
                 switch (exploreMessage.getMsgType()) {
                     case "Start" -> {
-                        long startTime = Long.parseLong(exploreMessage.getMsgContent());
-                        String formattedDate = new SimpleDateFormat("yyyy-MM-dd-HH_mm_ss")
-                                .format(new Date(startTime));
-                        filePath = "logs/" + formattedDate + "/";
+                        filePath = redisUtil.getString("filePath");
 
                         System.out.print(exploreMessage.getMsgType());
                         System.out.println(filePath);
@@ -62,9 +62,6 @@ public class ExploreLog {
                         loggerAnalysisLog = addLogFileAndBindLogger(filePath + "analysisLog.log"
                                 , LogNameEnum.ANALYSIS_LOG);
 
-                        System.out.println("222");
-                        loggerRunLog.info("111");
-
                         // 记录配置信息
                         int carNum = redisUtil.getIntByLock("carNum");
                         List<Car> cars = new ArrayList<>();
@@ -76,8 +73,8 @@ public class ExploreLog {
                         informationLog = new InformationLog(0
                                 , mapHeight
                                 , mapWidth
-                                , redisUtil.getMap("mapBarrier", mapHeight, mapWidth)
-                                , cars);
+                                , redisUtil.getMap("mapBarrier", mapHeight, mapWidth));
+                        System.out.println("新实验开始！");
                     }
                     case "Run" -> {
                         long durationTime = Long.parseLong(exploreMessage.getMsgContent());
@@ -100,6 +97,7 @@ public class ExploreLog {
 
                             // 记录序列化后的帧信息
                             loggerRunLog.info(runLog.toJson());
+                            System.out.println("已记录一帧！");
                         }
                     }
                     case "End" -> {
@@ -109,9 +107,11 @@ public class ExploreLog {
 
                         // 记录序列化后的配置信息
                         loggerInformation.info(informationLog.toJson());
+                        System.out.println("本次实验结束！");
 
-                        //将分析日志传到前端
-                        List<AnalysisLog> analysisLogs = readAnalysisLog(filePath + "analysisLog.log");
+                        // 上传所有日志
+                        CosUtil.upload(filePath);
+                        System.out.println("上传日志成功！");
                     }
                     case "Analysis" -> loggerAnalysisLog.info(exploreMessage.getMsgContent());
                 }

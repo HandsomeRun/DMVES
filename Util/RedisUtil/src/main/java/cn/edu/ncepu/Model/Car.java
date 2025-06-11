@@ -88,4 +88,19 @@ public class Car {
     public void setCarStatus(CarStatusEnum carStatus) {
         this.carStatus = carStatus;
     }
+
+    @Override
+    public String toString() {
+        return "Car{" +
+                "carId=" + carId +
+                ", carStatus=" + carStatus +
+                ", carPosition=" + carPosition +
+                ", carTarget=" + carTarget +
+                ", carPath='" + carPath + '\'' +
+                ", carAlgorithm=" + carAlgorithm +
+                ", carStatusCnt=" + carStatusCnt +
+                ", carColor='" + carColor + '\'' +
+                ", carLastRunTime=" + carLastRunTime +
+                '}';
+    }
 }

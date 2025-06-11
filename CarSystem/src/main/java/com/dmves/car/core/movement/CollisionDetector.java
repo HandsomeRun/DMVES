@@ -2,7 +2,7 @@ package com.dmves.car.core.movement;
 
 import com.dmves.car.core.model.Car;
 import com.dmves.car.core.blackboard.IBlackboard;
-import cn.edu.ncepu.RedisUtil;
+import cn.edu.ncepu.Util.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**

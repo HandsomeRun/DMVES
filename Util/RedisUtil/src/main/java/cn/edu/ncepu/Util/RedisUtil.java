@@ -1,5 +1,6 @@
-package cn.edu.ncepu;
+package cn.edu.ncepu.Util;
 
+import cn.edu.ncepu.Main;
 import cn.edu.ncepu.Model.Car;
 import com.google.gson.Gson;
 import redis.clients.jedis.Jedis;
@@ -304,10 +305,12 @@ public class RedisUtil {
      * @param key 对应键
      */
     public void waitWrite(String key) {
+        int cnt = 40;
         String writeLockName = groupId + "_" + key + "_writeLock";
         if (_jedis.exists(writeLockName)) {
-            while (Objects.equals(_jedis.get(writeLockName), "0")) {
+            while (cnt > 0 && Objects.equals(_jedis.get(writeLockName), "0")) {
                 try {
+                    cnt--;
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);

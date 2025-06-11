@@ -2,12 +2,14 @@ package cn.edu.ncepu;
 
 import cn.edu.ncepu.Model.Car;
 import cn.edu.ncepu.Model.RunLog;
+import cn.edu.ncepu.Util.CosUtil;
+import cn.edu.ncepu.Util.RedisUtil;
 import com.rabbitmq.impl.Sender;
 import com.rabbitmq.interfaces.ISender;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class PlayBackSystem {
@@ -26,27 +28,33 @@ public class PlayBackSystem {
         ISender sender = new Sender();
 
         String filePath = ""; /*= "E:/大学/软件体系结构/第二次作业/DMVES/logs/2025-06-08-11_31_05" + "/runLog.log";*/
-        long targetTime;
+        long startTime = -1;
         List<RunLog> runLogs = new ArrayList<>();
 
+        int index = 0;  //用来记录回放到第几帧
         while (true) {
-            long sleepTime = 500;
+            long sleepTime = 300;
             if ("回放中".equals(redisUtil.getIsWork())) {
+                long nowTime = System.currentTimeMillis();
                 String carRunLogName = redisUtil.getString("carRunLogName");
-                long playbackTime = redisUtil.getTimeStamp("playbackTime");
+                String playbackTime = redisUtil.getString("playbackTime");
+                redisUtil.setString("playbackTime", "");
 
                 // runLogs为空 或者 更换了路径
                 if (runLogs.isEmpty() || !filePath.equals(carRunLogName)) {
-                    runLogs = readRunLog(filePath + "/runLog.log");
+                    startTime = System.currentTimeMillis();
+                    filePath = carRunLogName;
+                    runLogs = readRunLog(filePath);
                 }
 
-                //查询所需的log
-                RunLog targetLog = findNearest(runLogs, playbackTime);
+                if (!playbackTime.isEmpty()) {
+                    index = findNearestAfter(runLogs, Long.parseLong(playbackTime));
+                }
 
                 // 如果不为空就写Redis，并且给View发消息
-                if (targetLog != null) {
-                    updateRedis(redisUtil, targetLog);
-                    sender.DMVESSenderMessage(Sender.ControlName,Sender.ViewName, "update");
+                if (index != -1 && nowTime - startTime > runLogs.get(index).getTimeStamp()) {
+                    updateRedis(redisUtil, runLogs.get(index++));
+                    sender.DMVESSenderMessage(Sender.ControlName, Sender.ViewName, "update");
                 }
             }
         }
@@ -61,7 +69,7 @@ public class PlayBackSystem {
     private static List<RunLog> readRunLog(String filePath) {
         List<RunLog> logs = new ArrayList<>();
 
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get(filePath))) {
+        try (BufferedReader reader = CosUtil.readRunLog(filePath)) {
             String line;
             while ((line = reader.readLine()) != null) {
                 logs.add(RunLog.getRunLog(line));
@@ -74,37 +82,40 @@ public class PlayBackSystem {
     }
 
     /**
-     * 使用二分查找与指定时间最近的log
+     * 找到时间 >= targetTime 的第一条日志的索引
      *
-     * @param logs       日志中所有logs
+     * @param logs       日志列表，按时间戳升序排列
      * @param targetTime 目标时间
-     * @return 最近的log
+     * @return 第一个时间大于等于 targetTime 的日志索引；如果全部小于 targetTime，返回 -1
      */
-    private static RunLog findNearest(List<RunLog> logs, long targetTime) {
+    private static int findNearestAfter(List<RunLog> logs, long targetTime) {
         if (logs == null || logs.isEmpty()) {
             System.out.println("Log为空！");
-            return null;
+            return -1;
         }
 
         int low = 0;
         int high = logs.size() - 1;
 
-        // 二分法
-        while (low < high) {
-            int mid = (low + high) / 2;
-            if (logs.get(mid).getTimeStamp() == targetTime) return logs.get(mid);
-            else if (logs.get(mid).getTimeStamp() < targetTime) low = mid + 1;
-            else high = mid;
+        // 如果所有日志的时间都小于 targetTime，则没有符合条件的
+        if (logs.get(high).getTimeStamp() < targetTime) {
+            return -1;
         }
 
-        // 寻找最近的那个时间戳
-        if (low == 0) return logs.get(low);
-        if (Math.abs(logs.get(low).getTimeStamp() - targetTime) <
-                Math.abs(logs.get(low - 1).getTimeStamp() - targetTime)) {
-            return logs.get(low);
-        } else {
-            return logs.get(low - 1);
+        int ans = -1;
+
+        while (low <= high) {
+            int mid = (low + high) / 2;
+
+            if (logs.get(mid).getTimeStamp() >= targetTime) {
+                ans = mid;     // 先记录候选答案
+                high = mid - 1; // 继续往左找更小的满足条件的 index
+            } else {
+                low = mid + 1;
+            }
         }
+
+        return ans;
     }
 
     /**

@@ -7,7 +7,7 @@ import com.dmves.car.core.model.Point;
 import com.dmves.car.core.movement.PathExecutor;
 import com.dmves.car.core.movement.CollisionDetector;
 import com.dmves.car.core.state.CarStateManager;
-import cn.edu.ncepu.RedisUtil;
+import cn.edu.ncepu.Util.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 

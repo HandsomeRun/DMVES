@@ -1,5 +1,7 @@
 package cn.edu.ncepu;
 
+import cn.edu.ncepu.Util.RedisUtil;
+
 import java.util.UUID;
 
 //RedisUtil使用示例
