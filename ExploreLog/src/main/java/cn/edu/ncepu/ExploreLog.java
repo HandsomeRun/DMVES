@@ -70,7 +70,8 @@ public class ExploreLog {
                         informationLog = new InformationLog(0
                                 , mapHeight
                                 , mapWidth
-                                , redisUtil.getMap("mapBarrier", mapHeight, mapWidth));
+                                , redisUtil.getMap("mapBarrier", mapHeight, mapWidth)
+                                , cars);
                         System.out.println("新实验开始！");
                     }
                     case "Run" -> {

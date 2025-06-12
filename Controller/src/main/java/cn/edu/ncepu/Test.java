@@ -32,54 +32,56 @@ public class Test {
             //2.连接Redis
             redisUtil.getJedis(uuid);
 
-            //3.写Redis
-            redisUtil.setInt("mapHeight", 15);
-            redisUtil.setInt("mapWidth", 15);
-            int[][] map = {
-                    {0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1},
-                    {0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0},
-                    {1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1},
-                    {1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0},
-                    {0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0},
-                    {0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1},
-                    {1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0},
-                    {1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1},
-                    {1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
-                    {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0},
-                    {0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0},
-                    {1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0},
-                    {1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
-                    {1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1},
-                    {0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0}
-            };
-            redisUtil.setMap("mapBarrier", map);
+//            //3.写Redis
+//            redisUtil.setInt("mapHeight", 15);
+//            redisUtil.setInt("mapWidth", 15);
+//            int[][] map = {
+//                    {0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1},
+//                    {0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0},
+//                    {1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1},
+//                    {1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0},
+//                    {0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0},
+//                    {0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1},
+//                    {1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0},
+//                    {1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1},
+//                    {1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+//                    {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0},
+//                    {0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0},
+//                    {1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0},
+//                    {1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
+//                    {1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1},
+//                    {0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0}
+//            };
+//            redisUtil.setMap("mapBarrier", map);
+//
+//            map = new int[15][15];
+//
+//            for (int i = 0; i < 15; i++) {
+//                for (int j = 0; j < 15; j++) {
+//                    map[i][j] = 0;
+//                }
+//            }
+//
+//            redisUtil.setMap("mapExplore", map);
 
-            map = new int[15][15];
+//            redisUtil.setInt("carNum", 1);
+//            redisUtil.setCar(new Car(1, CarStatusEnum.RUNNING, new Point(0, 0), null
+//                    , "RRRRRRRRRRRRRRR", CarAlgorithmEnum.BFS, 3, "#FF00F0"
+//                    , System.currentTimeMillis()));
 
-            for (int i = 0; i < 15; i++) {
-                for (int j = 0; j < 15; j++) {
-                    map[i][j] = 0;
-                }
-            }
+            System.out.println(redisUtil.getInt("mapHeight"));
 
-            redisUtil.setMap("mapExplore", map);
+            //Set<Integer> set = new HashSet<>();
+            //set.add(1);
+            //redisUtil.setDisConnectCars(set);
 
-            redisUtil.setInt("carNum", 1);
-            redisUtil.setCar(new Car(1, CarStatusEnum.RUNNING, new Point(0, 0), null
-                    , "R", CarAlgorithmEnum.BFS, 3, "#FF00F0"
-                    , System.currentTimeMillis()));
-
-            Set<Integer> set = new HashSet<>();
-            set.add(1);
-            redisUtil.setDisConnectCars(set);
-
-            Sender sender = new Sender();
-            sender.initExchange(Sender.carExchange, Sender.MQ_FANOUT);
-            for (int i = 0; i < 10; i++) {
-                sender.sendBroadcastMessage(Sender.carExchange, "run");
-                System.out.println("Send a Message!");
-                Thread.sleep(1000);
-            }
+//            Sender sender = new Sender();
+//            for (int i = 0; i < 30; i++) {
+//                sender.DMVESSenderMessage(Sender.ControlName,Sender.CarName,"run");
+//                sender.DMVESSenderMessage(Sender.ControlName,Sender.ViewName,"update");
+//                System.out.println("Send a Message!");
+//                Thread.sleep(1000);
+//            }
 
 //            redisUtil.setCar(new Car(2, CarStatusEnum.FREE, new Point(3, 3), null
 //                    , "UURR", CarAlgorithmEnum.BFS, 3, "#FF0000"

@@ -9,6 +9,7 @@ public class InformationLog {
     private int mapHeight;
     private int mapWidth;
     private int[][] mapBarrier;
+    private List<Car> cars;
 
     /**
      * 将json转为一个InformationLog对象
@@ -31,11 +32,12 @@ public class InformationLog {
         return gson.toJson(this);
     }
 
-    public InformationLog(long expDuration, int mapHeight, int mapWidth, int[][] mapBarrier) {
+    public InformationLog(long expDuration, int mapHeight, int mapWidth, int[][] mapBarrier, List<Car> cars) {
         this.expDuration = expDuration;
         this.mapHeight = mapHeight;
         this.mapWidth = mapWidth;
         this.mapBarrier = mapBarrier;
+        this.cars = cars;
     }
 
     public void setExpDuration(long expDuration) {

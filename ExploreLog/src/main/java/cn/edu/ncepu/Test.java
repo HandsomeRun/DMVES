@@ -13,7 +13,7 @@ public class Test {
 
     public static void main(String[] args) {
 
-        CosUtil.upload("logs/2025-06-10-23_27_13");
+        CosUtil.upload("logs/2025-06-11-14_32_38");
 //        // 1. 初始化 COS 客户端
 //        COSCredentials cred = new BasicCOSCredentials(SECRET_ID, SECRET_KEY);
 //        ClientConfig clientConfig = new ClientConfig(new Region(REGION));

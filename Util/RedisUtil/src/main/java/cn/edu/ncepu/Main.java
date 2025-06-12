@@ -8,8 +8,8 @@ import java.util.UUID;
 public class Main {
     public static void main(String[] args) {
         UUID uuid = UUID.randomUUID();
-        testReadLock(uuid);
-//        example(uuid);  //使用示例代码见下
+//        testReadLock(uuid);
+        example(uuid);  //使用示例代码见下
 //        testLock(uuid);
     }
 

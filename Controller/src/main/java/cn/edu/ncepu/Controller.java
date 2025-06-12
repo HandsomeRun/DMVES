@@ -70,11 +70,6 @@ public class Controller {
                         durationTime += nowTime - startTime;
                         startTime = nowTime;
 
-                        System.out.print("僵尸队列：");
-                        for (int i : redisUtil.getDisConnectCars()) {
-                            System.out.print(i + " ");
-                        }
-                        System.out.println();
                         // 遍历小车
                         int carNumber = redisUtil.getIntByLock("carNum");
                         System.out.println("carNum : " + carNumber);
@@ -172,7 +167,7 @@ public class Controller {
 //                            }
                         }
 
-                        sleepTime = 400;
+                        sleepTime = 200;
                     }
                     case "强制结束" -> {
                         // 给探索日志子系统发MQ，记录最后一帧，同时记录配置
@@ -209,5 +204,5 @@ public class Controller {
     /**
      * 小车进程最长容忍时间
      */
-    private final static long CAR_TOLERANCE_TIME = 20000;
+    private final static long CAR_TOLERANCE_TIME = 10000;
 }
