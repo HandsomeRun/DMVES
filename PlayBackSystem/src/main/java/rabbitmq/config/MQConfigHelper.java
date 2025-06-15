@@ -3,6 +3,7 @@ package rabbitmq.config;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.rabbitmq.config.RabbitMQConfig;
 
 import java.io.FileReader;
 import java.io.IOException;

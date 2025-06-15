@@ -110,7 +110,7 @@ public class Controller {
                                     System.out.println("Request Target carId : " + car.getCarId());
                                 }
                                 case WAIT_NAV -> {
-                                    car.setCarStatusCnt(3);
+                                    car.setCarStatusCnt(5);
                                     car.setCarStatus(CarStatusEnum.NAVIGATING);
                                     redisUtil.setCar(car);
 
@@ -153,7 +153,7 @@ public class Controller {
                                     , new ExploreMessage("Run", String.valueOf(durationTime)).toJson());
 
                             try {
-                                Thread.sleep(300);
+                                Thread.sleep(500);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
